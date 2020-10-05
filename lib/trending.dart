@@ -11,9 +11,10 @@ var trending = Container(
     children: <Widget>[
       CupertinoButton(
         child: Container(
-          // height: 200,
-          // width: 200,
+          height: 200,
+          width: 200,
           decoration: BoxDecoration(
+            color: Colors.yellowAccent,
             // image: DecorationImage(
             //   image: AssetImage("assets/mindful.jpg"),
             //   fit: BoxFit.cover,
@@ -23,7 +24,7 @@ var trending = Container(
           child: Container(
             margin: EdgeInsets.fromLTRB(15, 15, 0, 0),
             child: Text(
-              "Mindfulness",
+              "Cervejas",
               style: TextStyle(
                   color: Colors.black,
                   fontSize: 20,
@@ -35,9 +36,10 @@ var trending = Container(
       ),
       CupertinoButton(
         child: Container(
-          // height: 200,
-          // width: 200,
+          height: 200,
+          width: 200,
           decoration: BoxDecoration(
+            color: Colors.pinkAccent,
             // image: DecorationImage(
             //   image: AssetImage("assets/mindful.jpg"),
             //   fit: BoxFit.cover,
@@ -56,26 +58,6 @@ var trending = Container(
           ),
         ),
         onPressed: () {},
-      ),,
-      Container(
-        padding: const EdgeInsets.all(8),
-        child: const Text('Sound of screams but the'),
-        color: Colors.teal[300],
-      ),
-      Container(
-        padding: const EdgeInsets.all(8),
-        child: const Text('Who scream'),
-        color: Colors.teal[400],
-      ),
-      Container(
-        padding: const EdgeInsets.all(8),
-        child: const Text('Revolution is coming...'),
-        color: Colors.teal[500],
-      ),
-      Container(
-        padding: const EdgeInsets.all(8),
-        child: const Text('Revolution, they...'),
-        color: Colors.teal[600],
       ),
     ],
   ),
