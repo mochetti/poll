@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 
 import 'search.dart';
 import 'vote.dart';
+import '../services/database.dart';
 
 class Trending extends StatefulWidget {
   const Trending({Key key}) : super(key: key);
@@ -12,6 +13,14 @@ class Trending extends StatefulWidget {
 }
 
 class _TrendingState extends State<Trending> {
+  DatabaseMethods databaseMethods = new DatabaseMethods();
+
+  @override
+  void initState() {
+    // FocusScope.of(context).unfocus();
+    super.initState();
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -46,12 +55,7 @@ class _TrendingState extends State<Trending> {
                   ),
                 ),
               ),
-              onPressed: () => {
-                //   Navigator.push(
-                //   context,
-                //   MaterialPageRoute(builder: (context) => Vote()),
-                // );
-              },
+              onPressed: () => {},
             ),
             CupertinoButton(
               child: Container(
@@ -76,7 +80,16 @@ class _TrendingState extends State<Trending> {
                   ),
                 ),
               ),
-              onPressed: () {},
+              onPressed: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) => Vote(
+                      poll: 'universidades',
+                    ),
+                  ),
+                );
+              },
             ),
           ],
         ),

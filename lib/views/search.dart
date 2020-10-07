@@ -5,6 +5,7 @@ import '../widget/widget.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/cupertino.dart';
+import 'vote.dart';
 
 class Search extends StatefulWidget {
   @override
@@ -46,34 +47,12 @@ class _SearchState extends State<Search> {
               return pollCard(
                 searchResultSnapshot.docs[index].data()["name"],
                 searchResultSnapshot.docs[index].data()["createdBy"],
-                searchResultSnapshot.docs[index].data()["first"],
               );
             })
         : Container();
   }
 
-  /// 1.create a chatroom, send user to the chatroom, other userdetails
-  sendMessage(String userName) {
-    List<String> users = [Constants.myName, userName];
-
-    String chatRoomId = getChatRoomId(Constants.myName, userName);
-
-    Map<String, dynamic> chatRoom = {
-      "users": users,
-      "chatRoomId": chatRoomId,
-    };
-
-    databaseMethods.addChatRoom(chatRoom, chatRoomId);
-
-    // Navigator.push(
-    //     context,
-    //     MaterialPageRoute(
-    //         builder: (context) => Chat(
-    //               chatRoomId: chatRoomId,
-    //             )));
-  }
-
-  Widget pollCard(String name, String createdBy, String first) {
+  Widget pollCard(String name, String createdBy) {
     return CupertinoButton(
       child: Container(
         height: 100,
@@ -104,21 +83,18 @@ class _SearchState extends State<Search> {
                       fontSize: 20,
                       fontWeight: FontWeight.w600),
                 ),
-                Text(
-                  '1st: $first',
-                  style: TextStyle(
-                      color: Colors.black,
-                      fontSize: 20,
-                      fontWeight: FontWeight.w600),
-                ),
               ],
             )),
       ),
       onPressed: () => {
-        //   Navigator.push(
-        //   context,
-        //   MaterialPageRoute(builder: (context) => Vote()),
-        // );
+        Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (context) => Vote(
+              poll: searchResultSnapshot.docs[0].get('name'),
+            ),
+          ),
+        )
       },
     );
   }
@@ -159,7 +135,7 @@ class _SearchState extends State<Search> {
                             controller: searchEditingController,
                             style: simpleTextStyle(),
                             decoration: InputDecoration(
-                                hintText: "search username ...",
+                                hintText: "search poll ...",
                                 hintStyle: TextStyle(
                                   color: Colors.white,
                                   fontSize: 16,

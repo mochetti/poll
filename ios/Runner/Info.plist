@@ -25,6 +25,12 @@
   	<string>fbauth2</string>
   	<string>fbshareextension</string>
 	</array>
+	<key>NSPhotoLibraryUsageDescription</key>
+	<string>We need to access your photos!</string>
+	<key>NSCameraUsageDescription</key>
+	<string>We need to access your camera!</string>
+	<key>NSMicrophoneUsageDescription</key>
+	<string>We need to access your mic!</string>
 	<key>CFBundleDevelopmentRegion</key>
 	<string>$(DEVELOPMENT_LANGUAGE)</string>
 	<key>CFBundleExecutable</key>

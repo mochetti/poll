@@ -20,6 +20,61 @@ class DatabaseMethods {
     });
   }
 
+  // Returns doc from id
+  getDoc(String poll, String docId, int id) async {
+    return FirebaseFirestore.instance
+        .collection('polls')
+        .doc(docId)
+        .collection(poll)
+        .where('id', isEqualTo: id)
+        .limit(1)
+        .get()
+        .catchError((e) {
+      print(e.toString());
+    });
+  }
+
+  // Returns specific doc id
+  getPollId(String poll) async {
+    // QuerySnapshot searchResultSnapshot;
+    return FirebaseFirestore.instance
+        .collection('polls')
+        .where('name', isEqualTo: poll)
+        .limit(1)
+        .get()
+        .catchError((e) {
+      print(e.toString());
+    });
+  }
+
+  // Returns specific poll qnt
+  getQnt(String poll) async {
+    // QuerySnapshot searchResultSnapshot;
+    return FirebaseFirestore.instance
+        .collection("utils")
+        .where('name', isEqualTo: poll)
+        .limit(1)
+        .get()
+        .catchError((e) {
+      print(e.toString());
+    });
+  }
+
+  // Set doc field
+  Future<void> setScore(
+      String collection, String pollId, String docId, double score) async {
+    FirebaseFirestore.instance
+        .collection('polls')
+        .doc(pollId)
+        .collection(collection)
+        .doc(docId)
+        .update({
+      'score': score,
+    }).catchError((e) {
+      print(e.toString());
+    });
+  }
+
   searchByName(String searchField) {
     return FirebaseFirestore.instance
         .collection("users")
