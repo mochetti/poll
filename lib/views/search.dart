@@ -45,14 +45,15 @@ class _SearchState extends State<Search> {
             itemCount: searchResultSnapshot.docs.length,
             itemBuilder: (context, index) {
               return pollCard(
-                searchResultSnapshot.docs[index].data()["name"],
-                searchResultSnapshot.docs[index].data()["createdBy"],
+                searchResultSnapshot.docs[index].get("name"),
+                searchResultSnapshot.docs[index].get("createdBy"),
+                searchResultSnapshot.docs[index].id,
               );
             })
         : Container();
   }
 
-  Widget pollCard(String name, String createdBy) {
+  Widget pollCard(String name, String createdBy, String pollId) {
     return CupertinoButton(
       child: Container(
         height: 100,
@@ -91,7 +92,7 @@ class _SearchState extends State<Search> {
           context,
           MaterialPageRoute(
             builder: (context) => Vote(
-              poll: searchResultSnapshot.docs[0].get('name'),
+              pollId: pollId,
             ),
           ),
         )

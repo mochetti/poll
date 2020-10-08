@@ -33,6 +33,7 @@ class _MyAppState extends State<MyApp> {
         });
       } else {
         print('entrou');
+
         setState(() {
           userIsLoggedIn = true;
         });

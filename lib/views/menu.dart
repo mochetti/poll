@@ -1,10 +1,13 @@
 import 'package:flutter/material.dart';
 
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 
+import '../services/database.dart';
 import 'trending.dart';
 import 'profile.dart';
 import 'settings.dart';
+import '../models/user.dart';
 
 class Menu extends StatefulWidget {
   // const Menu({Key key}) : super(key: key);
@@ -15,6 +18,8 @@ class Menu extends StatefulWidget {
 
 class _MenuState extends State<Menu> {
   FirebaseFirestore firestore = FirebaseFirestore.instance;
+  FirebaseAuth _auth = FirebaseAuth.instance;
+  DatabaseMethods databaseMethods = new DatabaseMethods();
 
   int _selectedIndex = 0;
 
@@ -25,6 +30,16 @@ class _MenuState extends State<Menu> {
     Profile(),
     Setting(),
   ];
+
+  void loadData() async {
+    userQuery = await databaseMethods.getUserInfo(_auth.currentUser.email);
+  }
+
+  @override
+  void initState() {
+    loadData();
+    super.initState();
+  }
 
   void _onItemTapped(int index) {
     setState(() {
@@ -49,7 +64,7 @@ class _MenuState extends State<Menu> {
           ),
           BottomNavigationBarItem(
             icon: Icon(Icons.person),
-            label: 'Profile',
+            label: 'My Polls',
           ),
           BottomNavigationBarItem(
             icon: Icon(Icons.settings),

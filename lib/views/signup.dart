@@ -1,5 +1,8 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
+
 import '../helper/helperfunctions.dart';
 import '../helper/theme.dart';
+import '../models/user.dart';
 import '../services/auth.dart';
 import '../services/database.dart';
 import '../widget/widget.dart';
@@ -34,13 +37,18 @@ class _SignUpState extends State<SignUp> {
           .signUpWithEmailAndPassword(
               emailEditingController.text, passwordEditingController.text)
           .then((result) {
-        if (result != null) {
+        if (result == null) {
+          setState(() {
+            isLoading = false;
+          });
+        } else {
           Map<String, String> userDataMap = {
             "name": usernameEditingController.text,
             "email": emailEditingController.text
           };
 
           databaseMethods.addUser(userDataMap);
+          userQuery = databaseMethods.getUserInfo(emailEditingController.text);
 
           HelperFunctions.saveUserLoggedInSharedPreference(true);
           HelperFunctions.saveUserNameSharedPreference(
@@ -81,7 +89,7 @@ class _SignUpState extends State<SignUp> {
                                 ? "Enter Username 3+ characters"
                                 : null;
                           },
-                          decoration: textFieldInputDecoration("username"),
+                          decoration: textFieldInputDecoration("user"),
                         ),
                         TextFormField(
                           controller: emailEditingController,

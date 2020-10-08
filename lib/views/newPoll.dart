@@ -218,10 +218,6 @@ class _AddPollState extends State<AddPoll> {
     };
     databaseMethods.addPoll(pollData);
 
-    // add poll to utils
-    Map<String, dynamic> utilsData = {"name": widget.poll, "qnt": 0};
-    databaseMethods.addUtils(utilsData);
-
     // Get poll's id
     String docId;
     await databaseMethods.getPollId(widget.poll).then((snapshot) {
@@ -229,10 +225,14 @@ class _AddPollState extends State<AddPoll> {
     });
     print('docId = $docId');
 
+    // add poll to utils
+    Map<String, dynamic> utilsData = {"id": docId, "qnt": 0};
+    databaseMethods.addUtils(utilsData);
+
     // Get utils qnt and id
     int qnt = 0;
     String qntId = '';
-    await databaseMethods.getQnt(widget.poll).then((snapshot) {
+    await databaseMethods.getQnt(docId).then((snapshot) {
       qnt = snapshot.docs[0].get("qnt");
       qntId = snapshot.docs[0].id;
     });
@@ -248,15 +248,24 @@ class _AddPollState extends State<AddPoll> {
         "link": _uploadedFileURL,
         "score": 800
       };
+      // Add poll to polls
+      print('Adding poll to polls');
       databaseMethods.addPollItem(docId, itemData);
     }
 
     // Update qnt in utils
     databaseMethods.setQnt(qntId, qnt + pollItems.length);
 
-    setState(() {
-      isLoading = false;
-    });
+    // Add poll to user
+    print('Adding poll to user');
+    Map<String, String> pollUser = {"id": docId};
+    databaseMethods.addUserPoll(pollUser);
+
+    // setState(() {
+    //   isLoading = false;
+    // });
+
+    Navigator.pop(context);
   }
 
   @override

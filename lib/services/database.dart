@@ -1,4 +1,5 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
+import '../models/user.dart';
 
 class DatabaseMethods {
   Future<void> addUser(userData) async {
@@ -22,7 +23,7 @@ class DatabaseMethods {
 
   // Returns doc from id
   getDoc(String docId, int id) async {
-    return FirebaseFirestore.instance
+    return await FirebaseFirestore.instance
         .collection('polls')
         .doc(docId)
         .collection('items')
@@ -45,9 +46,20 @@ class DatabaseMethods {
     });
   }
 
-  // Returns specific doc id
+  // Returns multiple docs
+  getUserPolls() async {
+    return FirebaseFirestore.instance
+        .collection('users')
+        .doc(userQuery.docs[0].id)
+        .collection('polls')
+        .get()
+        .catchError((e) {
+      print(e.toString());
+    });
+  }
+
+  // Returns specific poll id using name
   getPollId(String poll) async {
-    // QuerySnapshot searchResultSnapshot;
     return FirebaseFirestore.instance
         .collection('polls')
         .where('name', isEqualTo: poll)
@@ -58,12 +70,22 @@ class DatabaseMethods {
     });
   }
 
+  // Returns specific poll using id
+  getPoll(String pollId) async {
+    return await FirebaseFirestore.instance
+        .collection('polls')
+        .doc(pollId)
+        .get()
+        .catchError((e) {
+      print(e.toString());
+    });
+  }
+
   // Returns specific poll qnt
-  getQnt(String poll) async {
-    // QuerySnapshot searchResultSnapshot;
-    return FirebaseFirestore.instance
+  getQnt(String pollId) async {
+    return await FirebaseFirestore.instance
         .collection("utils")
-        .where('name', isEqualTo: poll)
+        .where('id', isEqualTo: pollId)
         .limit(1)
         .get()
         .catchError((e) {
@@ -121,7 +143,18 @@ class DatabaseMethods {
         .doc(docId)
         .collection('items')
         .doc()
-        .setData(itemData);
+        .set(itemData);
+  }
+
+  // Add poll to user info
+  Future<void> addUserPoll(itemData) async {
+    print(userQuery.docs[0].id);
+    FirebaseFirestore.instance
+        .collection('users')
+        .doc(userQuery.docs[0].id)
+        .collection('polls')
+        .doc()
+        .set(itemData);
   }
 
   searchByName(String searchField) {

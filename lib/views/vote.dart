@@ -5,9 +5,9 @@ import 'dart:math';
 import 'package:cloud_firestore/cloud_firestore.dart';
 
 class Vote extends StatefulWidget {
-  const Vote({Key key, this.poll}) : super(key: key);
+  const Vote({Key key, this.pollId}) : super(key: key);
 
-  final String poll;
+  final String pollId;
 
   @override
   _VoteState createState() => _VoteState();
@@ -16,8 +16,9 @@ class Vote extends StatefulWidget {
 class _VoteState extends State<Vote> {
   QuerySnapshot a, b;
   String aName = 'A', bName = 'B';
+  String pollName;
   double aScore, bScore;
-  String aId, bId, pollId, aLink = '', bLink = '';
+  String aId, bId, aLink = '', bLink = '';
   int idA, idB;
   DatabaseMethods databaseMethods = new DatabaseMethods();
   bool isLoading = false;
@@ -33,45 +34,38 @@ class _VoteState extends State<Vote> {
 
   Future<void> loadData() async {
     print('Loading data ...');
-    // Get poll qnt
-    var qnt = 0;
-    await databaseMethods.getQnt(widget.poll).then((snapshot) {
-      qnt = snapshot.docs[0].get("qnt");
-    });
 
-    // Get poll's id
-    await databaseMethods.getPollId(widget.poll).then((snapshot) {
-      pollId = snapshot.docs[0].id;
-    });
-    print(pollId);
+    // Get poll name
+    print(widget.pollId);
+    var poll = await databaseMethods.getPoll(widget.pollId);
+    pollName = poll.get("name");
+    // Get poll qnt
+    poll = await databaseMethods.getQnt(widget.pollId);
+    int qnt = poll.docs[0].get("qnt");
 
     // Get two random id's
     var rand = Random();
-    idA = rand.nextInt(qnt + 1);
-    idB = rand.nextInt(qnt + 1);
-    while (idB == idA) idB = rand.nextInt(qnt + 1);
+    idA = rand.nextInt(qnt);
+    idB = rand.nextInt(qnt);
+    while (idB == idA) idB = rand.nextInt(qnt);
 
     // Get two docs
-    await databaseMethods.getDoc(pollId, idA).then((snapshot) {
-      a = snapshot;
-      aName = a.docs[0].get('name');
-      print(aName);
-      aScore = a.docs[0].get('score').toDouble();
-      aId = a.docs[0].id;
-      aLink = a.docs[0].get('link');
-    });
-    await databaseMethods.getDoc(pollId, idB).then((snapshot) {
-      b = snapshot;
-      bName = b.docs[0].get('name');
-      print(bName);
-      bScore = b.docs[0].get('score').toDouble();
-      bId = b.docs[0].id;
-      bLink = b.docs[0].get('link');
+    a = await databaseMethods.getDoc(widget.pollId, idA);
+    aName = a.docs[0].get('name');
+    print('aName: $aName');
+    aScore = a.docs[0].get('score').toDouble();
+    aId = a.docs[0].id;
+    aLink = a.docs[0].get('link');
+    b = await databaseMethods.getDoc(widget.pollId, idB);
+    bName = b.docs[0].get('name');
+    print('bName: $bName');
+    bScore = b.docs[0].get('score').toDouble();
+    bId = b.docs[0].id;
+    bLink = b.docs[0].get('link');
 
-      setState(() {
-        isLoading = false;
-        print('Loaded!');
-      });
+    setState(() {
+      isLoading = false;
+      print('Loaded!');
     });
   }
 
@@ -91,22 +85,27 @@ class _VoteState extends State<Vote> {
     print(bScore);
 
     // Update scores
-    await databaseMethods.setScore(pollId, aId, aScore);
-    await databaseMethods.setScore(pollId, bId, bScore);
+    await databaseMethods.setScore(widget.pollId, aId, aScore);
+    await databaseMethods.setScore(widget.pollId, bId, bScore);
 
     // Refresh
-    loadData();
+    await loadData();
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      appBar: isLoading
+          ? AppBar(title: Text('Poll'))
+          : AppBar(title: Text(pollName)),
       body: isLoading
           ? Container(
               child: Center(child: CircularProgressIndicator()),
             )
           : RefreshIndicator(
-              onRefresh: loadData,
+              onRefresh: () async => {
+                await loadData(),
+              },
               child: ListView(
                 physics: const BouncingScrollPhysics(
                     parent: AlwaysScrollableScrollPhysics()),
@@ -124,16 +123,19 @@ class _VoteState extends State<Vote> {
                               child: Container(
                                 height: 100,
                                 width: 100,
-                                decoration: BoxDecoration(
-                                  color: Colors.yellow,
-                                  image: aLink != ''
-                                      ? DecorationImage(
+                                decoration: aLink != ''
+                                    ? BoxDecoration(
+                                        color: Colors.yellow,
+                                        image: DecorationImage(
                                           image: NetworkImage(aLink),
                                           fit: BoxFit.fitWidth,
-                                        )
-                                      : DecorationImage(image: null),
-                                  borderRadius: BorderRadius.circular(12),
-                                ),
+                                        ),
+                                        borderRadius: BorderRadius.circular(12),
+                                      )
+                                    : BoxDecoration(
+                                        color: Colors.yellow,
+                                        borderRadius: BorderRadius.circular(12),
+                                      ),
                                 child: Container(
                                   margin: EdgeInsets.fromLTRB(15, 15, 0, 0),
                                   child: Text(
@@ -154,16 +156,21 @@ class _VoteState extends State<Vote> {
                                 child: Container(
                                   height: 100,
                                   width: 100,
-                                  decoration: BoxDecoration(
-                                    color: Colors.red,
-                                    image: bLink != ''
-                                        ? DecorationImage(
+                                  decoration: bLink != ''
+                                      ? BoxDecoration(
+                                          color: Colors.red,
+                                          image: DecorationImage(
                                             image: NetworkImage(aLink),
                                             fit: BoxFit.fitWidth,
-                                          )
-                                        : DecorationImage(image: null),
-                                    borderRadius: BorderRadius.circular(12),
-                                  ),
+                                          ),
+                                          borderRadius:
+                                              BorderRadius.circular(12),
+                                        )
+                                      : BoxDecoration(
+                                          color: Colors.red,
+                                          borderRadius:
+                                              BorderRadius.circular(12),
+                                        ),
                                   child: Container(
                                     margin: EdgeInsets.fromLTRB(15, 15, 0, 0),
                                     child: Text(
@@ -183,7 +190,9 @@ class _VoteState extends State<Vote> {
                       ),
                       RaisedButton(
                         child: Icon(Icons.refresh),
-                        onPressed: () => loadData(),
+                        onPressed: () async => {
+                          await loadData(),
+                        },
                       )
                     ],
                   ),

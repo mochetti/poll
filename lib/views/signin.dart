@@ -5,6 +5,7 @@ import '../services/database.dart';
 import '../views/forgot_password.dart';
 import '../widget/widget.dart';
 import '../views/menu.dart';
+import '../models/user.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 
@@ -40,8 +41,9 @@ class _SignInState extends State<SignIn> {
                   emailEditingController.text, passwordEditingController.text)
               .then((result) async {
             if (result != null) {
-              QuerySnapshot userInfoSnapshot = await DatabaseMethods()
+              userQuery = await DatabaseMethods()
                   .getUserInfo(emailEditingController.text);
+
               // HelperFunctions.saveUserLoggedInSharedPreference(true);
               // HelperFunctions.saveUserNameSharedPreference(
               //     userInfoSnapshot.docs[0].data()["userName"]);

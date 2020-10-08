@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 import 'search.dart';
 import 'vote.dart';
 import '../services/database.dart';
+import '../models/poll.dart';
 
 class Trending extends StatefulWidget {
   const Trending({Key key}) : super(key: key);
@@ -16,7 +17,8 @@ class Trending extends StatefulWidget {
 class _TrendingState extends State<Trending> {
   DatabaseMethods databaseMethods = new DatabaseMethods();
   QuerySnapshot query;
-  List<TrendingPoll> trendingPolls = [];
+  List<Poll> trendingPolls = [];
+  bool isLoading = false;
 
   Future<void> loadData() async {
     await databaseMethods.getTrending().then((snapshot) {
@@ -24,14 +26,19 @@ class _TrendingState extends State<Trending> {
     });
     trendingPolls = [];
     for (int index = 0; index < query.docs.length; index++) {
-      trendingPolls.add(new TrendingPoll(
-          query.docs[index].get('name'), query.docs[index].get('createdBy')));
+      trendingPolls.add(new Poll(query.docs[index].get('name'),
+          query.docs[index].get('createdBy'), query.docs[index].id));
     }
-    setState(() {});
+    setState(() {
+      isLoading = false;
+    });
   }
 
   @override
   void initState() {
+    setState(() {
+      isLoading = true;
+    });
     // FocusScope.of(context).unfocus();
     loadData();
     super.initState();
@@ -40,55 +47,60 @@ class _TrendingState extends State<Trending> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      body: RefreshIndicator(
-        onRefresh: loadData,
-        child: GridView.builder(
-          gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-            crossAxisCount: 2,
-            mainAxisSpacing: 10,
-            crossAxisSpacing: 10,
-          ),
-          physics: const BouncingScrollPhysics(
-              parent: AlwaysScrollableScrollPhysics()),
-          primary: false,
-          padding: const EdgeInsets.all(20),
-          itemCount: trendingPolls.length,
-          itemBuilder: (context, index) {
-            return CupertinoButton(
-              child: Container(
-                height: 200,
-                width: 200,
-                decoration: BoxDecoration(
-                  color: Colors.yellowAccent,
-                  // image: DecorationImage(
-                  //   image: AssetImage("assets/mindful.jpg"),
-                  //   fit: BoxFit.cover,
-                  // ),
-                  borderRadius: BorderRadius.circular(12),
+      body: isLoading
+          ? Container(
+              child: Center(child: CircularProgressIndicator()),
+            )
+          : RefreshIndicator(
+              onRefresh: loadData,
+              child: GridView.builder(
+                gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+                  crossAxisCount: 2,
+                  mainAxisSpacing: 10,
+                  crossAxisSpacing: 10,
                 ),
-                child: Container(
-                  margin: EdgeInsets.fromLTRB(15, 15, 0, 0),
-                  child: Text(
-                    trendingPolls[index].name,
-                    style: TextStyle(
-                        color: Colors.black,
-                        fontSize: 20,
-                        fontWeight: FontWeight.w600),
-                  ),
-                ),
+                physics: const BouncingScrollPhysics(
+                    parent: AlwaysScrollableScrollPhysics()),
+                primary: false,
+                padding: const EdgeInsets.all(20),
+                itemCount: trendingPolls.length,
+                itemBuilder: (context, index) {
+                  return CupertinoButton(
+                    child: Container(
+                      height: 200,
+                      width: 200,
+                      decoration: BoxDecoration(
+                        color: Colors.yellowAccent,
+                        // image: DecorationImage(
+                        //   image: AssetImage("assets/mindful.jpg"),
+                        //   fit: BoxFit.cover,
+                        // ),
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      child: Container(
+                        margin: EdgeInsets.fromLTRB(15, 15, 0, 0),
+                        child: Text(
+                          trendingPolls[index].name,
+                          style: TextStyle(
+                              color: Colors.black,
+                              fontSize: 20,
+                              fontWeight: FontWeight.w600),
+                        ),
+                      ),
+                    ),
+                    onPressed: () => {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) =>
+                              Vote(pollId: trendingPolls[index].id),
+                        ),
+                      ),
+                    },
+                  );
+                },
               ),
-              onPressed: () => {
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                    builder: (context) => Vote(poll: trendingPolls[index].name),
-                  ),
-                ),
-              },
-            );
-          },
-        ),
-      ),
+            ),
       floatingActionButton: FloatingActionButton(
         child: Icon(Icons.search),
         onPressed: () {
@@ -97,15 +109,5 @@ class _TrendingState extends State<Trending> {
         },
       ),
     );
-  }
-}
-
-class TrendingPoll {
-  String name;
-  String creator;
-  String first;
-  TrendingPoll(String n, String c) {
-    name = n;
-    creator = c;
   }
 }
