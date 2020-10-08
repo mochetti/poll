@@ -1,7 +1,7 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 
 class DatabaseMethods {
-  Future<void> addUserInfo(userData) async {
+  Future<void> addUser(userData) async {
     FirebaseFirestore.instance
         .collection("users")
         .add(userData)
@@ -13,7 +13,7 @@ class DatabaseMethods {
   getUserInfo(String email) async {
     return FirebaseFirestore.instance
         .collection("users")
-        .where("userEmail", isEqualTo: email)
+        .where("email", isEqualTo: email)
         .get()
         .catchError((e) {
       print(e.toString());
@@ -21,13 +21,24 @@ class DatabaseMethods {
   }
 
   // Returns doc from id
-  getDoc(String poll, String docId, int id) async {
+  getDoc(String docId, int id) async {
     return FirebaseFirestore.instance
         .collection('polls')
         .doc(docId)
-        .collection(poll)
+        .collection('items')
         .where('id', isEqualTo: id)
         .limit(1)
+        .get()
+        .catchError((e) {
+      print(e.toString());
+    });
+  }
+
+  // Returns multiple docs
+  getTrending() async {
+    return FirebaseFirestore.instance
+        .collection('polls')
+        .limit(5)
         .get()
         .catchError((e) {
       print(e.toString());
@@ -60,19 +71,57 @@ class DatabaseMethods {
     });
   }
 
+  // Set poll qnt
+  Future<void> setQnt(String docId, int qnt) async {
+    FirebaseFirestore.instance.collection('utils').doc(docId).update({
+      'qnt': qnt,
+    }).catchError((e) {
+      print(e.toString());
+    });
+  }
+
   // Set doc field
-  Future<void> setScore(
-      String collection, String pollId, String docId, double score) async {
+  Future<void> setScore(String pollId, String docId, double score) async {
     FirebaseFirestore.instance
         .collection('polls')
         .doc(pollId)
-        .collection(collection)
+        .collection('items')
         .doc(docId)
         .update({
       'score': score,
     }).catchError((e) {
       print(e.toString());
     });
+  }
+
+  // Add poll to utils
+  Future<void> addUtils(utilsData) async {
+    FirebaseFirestore.instance
+        .collection('utils')
+        .add(utilsData)
+        .catchError((e) {
+      print(e.toString());
+    });
+  }
+
+  // Add poll
+  Future<void> addPoll(pollData) async {
+    FirebaseFirestore.instance
+        .collection('polls')
+        .add(pollData)
+        .catchError((e) {
+      print(e.toString());
+    });
+  }
+
+  // Add poll item
+  Future<void> addPollItem(String docId, itemData) async {
+    FirebaseFirestore.instance
+        .collection('polls')
+        .doc(docId)
+        .collection('items')
+        .doc()
+        .setData(itemData);
   }
 
   searchByName(String searchField) {

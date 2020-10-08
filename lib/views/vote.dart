@@ -31,18 +31,19 @@ class _VoteState extends State<Vote> {
     super.initState();
   }
 
-  void loadData() async {
+  Future<void> loadData() async {
     print('Loading data ...');
     // Get poll qnt
     var qnt = 0;
     await databaseMethods.getQnt(widget.poll).then((snapshot) {
-      qnt = snapshot.docs[0].data()["qnt"];
+      qnt = snapshot.docs[0].get("qnt");
     });
 
     // Get poll's id
     await databaseMethods.getPollId(widget.poll).then((snapshot) {
       pollId = snapshot.docs[0].id;
     });
+    print(pollId);
 
     // Get two random id's
     var rand = Random();
@@ -51,17 +52,19 @@ class _VoteState extends State<Vote> {
     while (idB == idA) idB = rand.nextInt(qnt + 1);
 
     // Get two docs
-    await databaseMethods.getDoc(widget.poll, pollId, idA).then((snapshot) {
+    await databaseMethods.getDoc(pollId, idA).then((snapshot) {
       a = snapshot;
       aName = a.docs[0].get('name');
-      aScore = a.docs[0].get('score');
+      print(aName);
+      aScore = a.docs[0].get('score').toDouble();
       aId = a.docs[0].id;
       aLink = a.docs[0].get('link');
     });
-    await databaseMethods.getDoc(widget.poll, pollId, idB).then((snapshot) {
+    await databaseMethods.getDoc(pollId, idB).then((snapshot) {
       b = snapshot;
       bName = b.docs[0].get('name');
-      bScore = b.docs[0].get('score');
+      print(bName);
+      bScore = b.docs[0].get('score').toDouble();
       bId = b.docs[0].id;
       bLink = b.docs[0].get('link');
 
@@ -88,8 +91,8 @@ class _VoteState extends State<Vote> {
     print(bScore);
 
     // Update scores
-    await databaseMethods.setScore(widget.poll, pollId, aId, aScore);
-    await databaseMethods.setScore(widget.poll, pollId, bId, bScore);
+    await databaseMethods.setScore(pollId, aId, aScore);
+    await databaseMethods.setScore(pollId, bId, bScore);
 
     // Refresh
     loadData();
@@ -102,80 +105,90 @@ class _VoteState extends State<Vote> {
           ? Container(
               child: Center(child: CircularProgressIndicator()),
             )
-          : Column(
-              children: [
-                SizedBox(
-                  height: 100,
-                ),
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                  children: [
-                    Column(children: [
-                      CupertinoButton(
-                        child: Container(
-                          height: 100,
-                          width: 100,
-                          decoration: BoxDecoration(
-                            color: Colors.pink,
-                            image: DecorationImage(
-                              image: NetworkImage(
-                                  'https://firebasestorage.googleapis.com/v0/b/poll-abd8b.appspot.com/o/logo_unesp.png?alt=media&token=0f86bd85-ce9a-4d66-b0c7-736b42887e62'),
-                              fit: BoxFit.cover,
-                            ),
-                            borderRadius: BorderRadius.circular(12),
-                          ),
-                          child: Container(
-                            margin: EdgeInsets.fromLTRB(15, 15, 0, 0),
-                            child: Text(
-                              aName,
-                              style: TextStyle(
-                                  color: Colors.black,
-                                  fontSize: 20,
-                                  fontWeight: FontWeight.w600),
-                            ),
-                          ),
-                        ),
-                        onPressed: () => compute(true),
+          : RefreshIndicator(
+              onRefresh: loadData,
+              child: ListView(
+                physics: const BouncingScrollPhysics(
+                    parent: AlwaysScrollableScrollPhysics()),
+                children: [
+                  Column(
+                    children: [
+                      SizedBox(
+                        height: 100,
                       ),
-                      // Text(aScore.toString()),
-                    ]),
-                    Column(
-                      children: [
-                        CupertinoButton(
-                          child: Container(
-                            height: 100,
-                            width: 100,
-                            decoration: BoxDecoration(
-                              color: Colors.yellow,
-                              // image: DecorationImage(
-                              //   image: NetworkImage(bLink),
-                              //   fit: BoxFit.cover,
-                              // ),
-                              borderRadius: BorderRadius.circular(12),
-                            ),
-                            child: Container(
-                              margin: EdgeInsets.fromLTRB(15, 15, 0, 0),
-                              child: Text(
-                                bName,
-                                style: TextStyle(
-                                    color: Colors.black,
-                                    fontSize: 20,
-                                    fontWeight: FontWeight.w600),
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                        children: [
+                          Column(children: [
+                            CupertinoButton(
+                              child: Container(
+                                height: 100,
+                                width: 100,
+                                decoration: BoxDecoration(
+                                  color: Colors.yellow,
+                                  image: aLink != ''
+                                      ? DecorationImage(
+                                          image: NetworkImage(aLink),
+                                          fit: BoxFit.fitWidth,
+                                        )
+                                      : DecorationImage(image: null),
+                                  borderRadius: BorderRadius.circular(12),
+                                ),
+                                child: Container(
+                                  margin: EdgeInsets.fromLTRB(15, 15, 0, 0),
+                                  child: Text(
+                                    aName,
+                                    style: TextStyle(
+                                        color: Colors.black,
+                                        fontSize: 20,
+                                        fontWeight: FontWeight.w600),
+                                  ),
+                                ),
                               ),
+                              onPressed: () => compute(true),
                             ),
+                          ]),
+                          Column(
+                            children: [
+                              CupertinoButton(
+                                child: Container(
+                                  height: 100,
+                                  width: 100,
+                                  decoration: BoxDecoration(
+                                    color: Colors.red,
+                                    image: bLink != ''
+                                        ? DecorationImage(
+                                            image: NetworkImage(aLink),
+                                            fit: BoxFit.fitWidth,
+                                          )
+                                        : DecorationImage(image: null),
+                                    borderRadius: BorderRadius.circular(12),
+                                  ),
+                                  child: Container(
+                                    margin: EdgeInsets.fromLTRB(15, 15, 0, 0),
+                                    child: Text(
+                                      bName,
+                                      style: TextStyle(
+                                          color: Colors.black,
+                                          fontSize: 20,
+                                          fontWeight: FontWeight.w600),
+                                    ),
+                                  ),
+                                ),
+                                onPressed: () => compute(false),
+                              ),
+                            ],
                           ),
-                          onPressed: () => compute(false),
-                        ),
-                        // Text(bScore.toString()),
-                      ],
-                    ),
-                  ],
-                ),
-                RaisedButton(
-                  child: Icon(Icons.refresh),
-                  onPressed: () => loadData(),
-                )
-              ],
+                        ],
+                      ),
+                      RaisedButton(
+                        child: Icon(Icons.refresh),
+                        onPressed: () => loadData(),
+                      )
+                    ],
+                  ),
+                ],
+              ),
             ),
     );
   }

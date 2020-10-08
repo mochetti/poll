@@ -24,7 +24,7 @@ class _SignUpState extends State<SignUp> {
   final formKey = GlobalKey<FormState>();
   bool isLoading = false;
 
-  singUp() async {
+  signUp() async {
     if (formKey.currentState.validate()) {
       setState(() {
         isLoading = true;
@@ -36,11 +36,11 @@ class _SignUpState extends State<SignUp> {
           .then((result) {
         if (result != null) {
           Map<String, String> userDataMap = {
-            "userName": usernameEditingController.text,
-            "userEmail": emailEditingController.text
+            "name": usernameEditingController.text,
+            "email": emailEditingController.text
           };
 
-          databaseMethods.addUserInfo(userDataMap);
+          databaseMethods.addUser(userDataMap);
 
           HelperFunctions.saveUserLoggedInSharedPreference(true);
           HelperFunctions.saveUserNameSharedPreference(
@@ -69,7 +69,6 @@ class _SignUpState extends State<SignUp> {
               padding: EdgeInsets.symmetric(horizontal: 24),
               child: Column(
                 children: [
-                  Spacer(),
                   Form(
                     key: formKey,
                     child: Column(
@@ -115,7 +114,7 @@ class _SignUpState extends State<SignUp> {
                   ),
                   GestureDetector(
                     onTap: () {
-                      singUp();
+                      signUp();
                     },
                     child: Container(
                       padding: EdgeInsets.symmetric(vertical: 16),
@@ -133,22 +132,6 @@ class _SignUpState extends State<SignUp> {
                         style: biggerTextStyle(),
                         textAlign: TextAlign.center,
                       ),
-                    ),
-                  ),
-                  SizedBox(
-                    height: 16,
-                  ),
-                  Container(
-                    padding: EdgeInsets.symmetric(vertical: 16),
-                    decoration: BoxDecoration(
-                        borderRadius: BorderRadius.circular(30),
-                        color: Colors.white),
-                    width: MediaQuery.of(context).size.width,
-                    child: Text(
-                      "Sign Up with Google",
-                      style:
-                          TextStyle(fontSize: 17, color: CustomTheme.textColor),
-                      textAlign: TextAlign.center,
                     ),
                   ),
                   SizedBox(
