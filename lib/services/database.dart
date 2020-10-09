@@ -81,6 +81,20 @@ class DatabaseMethods {
     });
   }
 
+  // Returns top items using poll id
+  getTop(String pollId) async {
+    return await FirebaseFirestore.instance
+        .collection('polls')
+        .doc(pollId)
+        .collection('items')
+        .orderBy('score', descending: true)
+        .limit(5)
+        .get()
+        .catchError((e) {
+      print(e.toString());
+    });
+  }
+
   // Returns specific poll qnt
   getQnt(String pollId) async {
     return await FirebaseFirestore.instance

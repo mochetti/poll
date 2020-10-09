@@ -1,0 +1,47 @@
+{
+  "project_info": {
+    "project_number": "825023673611",
+    "firebase_url": "https://poll-abd8b.firebaseio.com",
+    "project_id": "poll-abd8b",
+    "storage_bucket": "poll-abd8b.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:825023673611:android:7f92bb4b113e4c06c11e0e",
+        "android_client_info": {
+          "package_name": "com.sala49.poll"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "825023673611-9mn8755g6d32ff8htbptb40qa2757iq7.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyARB1D4FUyMKWpintaN4e52OY4U_l-LoIw"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "825023673611-9mn8755g6d32ff8htbptb40qa2757iq7.apps.googleusercontent.com",
+              "client_type": 3
+            },
+            {
+              "client_id": "825023673611-45g2db231lgsv0di511okdbevor68st1.apps.googleusercontent.com",
+              "client_type": 2,
+              "ios_info": {
+                "bundle_id": "com.sala49.poll"
+              }
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

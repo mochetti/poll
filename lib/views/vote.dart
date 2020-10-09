@@ -1,5 +1,6 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
+import 'package:poll/models/poll.dart';
 import '../services/database.dart';
 import 'dart:math';
 import 'package:cloud_firestore/cloud_firestore.dart';
@@ -22,6 +23,7 @@ class _VoteState extends State<Vote> {
   int idA, idB;
   DatabaseMethods databaseMethods = new DatabaseMethods();
   bool isLoading = false;
+  List<String> topItems = [];
 
   @override
   void initState() {
@@ -62,6 +64,12 @@ class _VoteState extends State<Vote> {
     bScore = b.docs[0].get('score').toDouble();
     bId = b.docs[0].id;
     bLink = b.docs[0].get('link');
+
+    // Load top polls
+    poll = await databaseMethods.getTop(widget.pollId);
+    topItems = [];
+    for (int index = 0; index < poll.docs.length; index++)
+      topItems.add(poll.docs[index].get('name'));
 
     setState(() {
       isLoading = false;
@@ -107,6 +115,7 @@ class _VoteState extends State<Vote> {
                 await loadData(),
               },
               child: ListView(
+                shrinkWrap: true,
                 physics: const BouncingScrollPhysics(
                     parent: AlwaysScrollableScrollPhysics()),
                 children: [
@@ -121,11 +130,10 @@ class _VoteState extends State<Vote> {
                           Column(children: [
                             CupertinoButton(
                               child: Container(
-                                height: 100,
-                                width: 100,
+                                height: 120,
+                                width: 120,
                                 decoration: aLink != ''
                                     ? BoxDecoration(
-                                        color: Colors.yellow,
                                         image: DecorationImage(
                                           image: NetworkImage(aLink),
                                           fit: BoxFit.fitWidth,
@@ -154,13 +162,12 @@ class _VoteState extends State<Vote> {
                             children: [
                               CupertinoButton(
                                 child: Container(
-                                  height: 100,
-                                  width: 100,
+                                  height: 120,
+                                  width: 120,
                                   decoration: bLink != ''
                                       ? BoxDecoration(
-                                          color: Colors.red,
                                           image: DecorationImage(
-                                            image: NetworkImage(aLink),
+                                            image: NetworkImage(bLink),
                                             fit: BoxFit.fitWidth,
                                           ),
                                           borderRadius:
@@ -193,7 +200,26 @@ class _VoteState extends State<Vote> {
                         onPressed: () async => {
                           await loadData(),
                         },
-                      )
+                      ),
+                      SizedBox(height: 16),
+                      ListView.builder(
+                          shrinkWrap: true,
+                          itemCount: topItems.length,
+                          itemBuilder: (context, index) {
+                            return Row(
+                              mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                              children: [
+                                Text(
+                                  (index + 1).toString(),
+                                  style: TextStyle(color: Colors.white),
+                                ),
+                                Text(
+                                  topItems[index],
+                                  style: TextStyle(color: Colors.white),
+                                ),
+                              ],
+                            );
+                          }),
                     ],
                   ),
                 ],
