@@ -14,10 +14,45 @@ class _ForgotPasswordState extends State<ForgotPassword> {
   final formKey = GlobalKey<FormState>();
 
   Future<void> resetPassword() async {
-    await _firebaseAuth.sendPasswordResetEmail(email: emailTC.text);
+    setState(() {
+      isLoading = true;
+    });
+    try {
+      await _firebaseAuth.sendPasswordResetEmail(email: emailTC.text);
+      forgetPassDialog('Check your email!');
+    } catch (e) {
+      print(e.code);
+      if (e.code == 'invalid-email') forgetPassDialog('Invalid email!');
+      if (e.code == 'user-not-found')
+        forgetPassDialog('User not found!');
+      else
+        forgetPassDialog(e.toString());
+    }
+
     setState(() {
       isLoading = false;
     });
+  }
+
+  Future<void> forgetPassDialog(String txt) async {
+    return showDialog<void>(
+      context: context,
+      barrierDismissible: false, // user must tap button!
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: Text('Change password'),
+          content: Text(txt),
+          actions: <Widget>[
+            TextButton(
+              child: Text('Ok'),
+              onPressed: () {
+                Navigator.of(context).pop();
+              },
+            ),
+          ],
+        );
+      },
+    );
   }
 
   @override

@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:poll/models/poll.dart';
 import '../services/database.dart';
 import 'dart:math';
+import 'dart:async';
 import 'package:cloud_firestore/cloud_firestore.dart';
 
 class Vote extends StatefulWidget {
@@ -16,103 +17,157 @@ class Vote extends StatefulWidget {
 
 class _VoteState extends State<Vote> {
   QuerySnapshot a, b;
-  String aName = 'A', bName = 'B';
   String pollName;
-  double aScore, bScore;
-  String aId, bId, aLink = '', bLink = '';
-  int idA, idB;
+  ValueNotifier<List<PollItem>> items = ValueNotifier([]);
   DatabaseMethods databaseMethods = new DatabaseMethods();
   bool isLoading = false;
-  List<String> topItems = [];
+  bool proxLoading = false;
+  bool firstTime = true;
+  List<PollItem> topItems = [];
 
   @override
   void initState() {
     setState(() {
       isLoading = true;
     });
-    loadData();
+    getData();
     super.initState();
   }
 
+  Future<void> getData() async {
+    print('Getting data...');
+    // print('length: ${items.value.length}');
+
+    if (items.value.length <= 1) {
+      setState(() {
+        isLoading = true;
+      });
+      Timer(
+        const Duration(milliseconds: 500),
+        () => {
+          if (!proxLoading)
+            {
+              loadData(),
+              proxLoading = true,
+            },
+          getData(),
+        },
+      );
+    } else {
+      proxLoading = false;
+      // Remove last items
+      if (items.value.length >= 4) {
+        items.value.removeAt(1);
+        items.value.removeAt(0);
+      }
+
+      loadData();
+
+      // Load top items
+      var poll = await databaseMethods.getTop(widget.pollId);
+      topItems = [];
+      for (int index = 0; index < poll.docs.length; index++)
+        topItems.add(
+          new PollItem.nameAndScore(
+            poll.docs[index].get('name'),
+            poll.docs[index].get('score'),
+          ),
+        );
+
+      setState(() {
+        isLoading = false;
+        print('Got data!');
+      });
+    }
+  }
+
   Future<void> loadData() async {
-    print('Loading data ...');
+    while (items.value.length < 10) {
+      // Get poll name
+      var poll = await databaseMethods.getPoll(widget.pollId);
+      pollName = poll.get("name");
 
-    // Get poll name
-    print(widget.pollId);
-    var poll = await databaseMethods.getPoll(widget.pollId);
-    pollName = poll.get("name");
-    // Get poll qnt
-    poll = await databaseMethods.getQnt(widget.pollId);
-    int qnt = poll.docs[0].get("qnt");
+      // Get poll qnt
+      poll = await databaseMethods.getQnt(widget.pollId);
+      int qnt = poll.docs[0].get("qnt");
 
-    // Get two random id's
-    var rand = Random();
-    idA = rand.nextInt(qnt);
-    idB = rand.nextInt(qnt);
-    while (idB == idA) idB = rand.nextInt(qnt);
+      // Get two random id's
+      int idA, idB;
+      var rand = Random();
+      idA = rand.nextInt(qnt);
+      idB = rand.nextInt(qnt);
+      while (idB == idA) idB = rand.nextInt(qnt);
 
-    // Get two docs
-    a = await databaseMethods.getDoc(widget.pollId, idA);
-    aName = a.docs[0].get('name');
-    print('aName: $aName');
-    aScore = a.docs[0].get('score').toDouble();
-    aId = a.docs[0].id;
-    aLink = a.docs[0].get('link');
-    b = await databaseMethods.getDoc(widget.pollId, idB);
-    bName = b.docs[0].get('name');
-    print('bName: $bName');
-    bScore = b.docs[0].get('score').toDouble();
-    bId = b.docs[0].id;
-    bLink = b.docs[0].get('link');
+      // Get two docs
+      PollItem itemA = new PollItem();
+      a = await databaseMethods.getDoc(widget.pollId, idA);
+      itemA.name = a.docs[0].get('name');
+      itemA.score = a.docs[0].get('score').toDouble();
+      itemA.id = a.docs[0].id;
+      itemA.link = a.docs[0].get('link');
 
-    // Load top polls
-    poll = await databaseMethods.getTop(widget.pollId);
-    topItems = [];
-    for (int index = 0; index < poll.docs.length; index++)
-      topItems.add(poll.docs[index].get('name'));
+      PollItem itemB = new PollItem();
+      b = await databaseMethods.getDoc(widget.pollId, idB);
+      itemB.name = b.docs[0].get('name');
+      itemB.score = b.docs[0].get('score').toDouble();
+      itemB.id = b.docs[0].id;
+      itemB.link = b.docs[0].get('link');
 
-    setState(() {
-      isLoading = false;
-      print('Loaded!');
-    });
+      items.value.add(itemA);
+      items.value.add(itemB);
+
+      items.notifyListeners();
+    }
   }
 
   void compute(bool aWon) async {
     int k = 5;
-    var pA = (1.0 / (1.0 + pow(10, ((bScore - aScore) / 400))));
-    var pB = (1.0 / (1.0 + pow(10, ((aScore - bScore) / 400))));
+    var pA = (1.0 /
+        (1.0 + pow(10, ((items.value[1].score - items.value[0].score) / 400))));
+    var pB = (1.0 /
+        (1.0 + pow(10, ((items.value[0].score - items.value[1].score) / 400))));
 
     if (aWon) {
-      aScore = aScore + k * (1 - pA);
-      bScore = bScore + k * (0 - pB);
+      items.value[0].score = items.value[0].score + k * (1 - pA);
+      items.value[1].score = items.value[1].score + k * (0 - pB);
     } else {
-      aScore = aScore + k * (0 - pA);
-      bScore = bScore + k * (1 - pB);
+      items.value[0].score = items.value[0].score + k * (0 - pA);
+      items.value[1].score = items.value[1].score + k * (1 - pB);
     }
-    print(aScore);
-    print(bScore);
 
-    // Update scores
-    await databaseMethods.setScore(widget.pollId, aId, aScore);
-    await databaseMethods.setScore(widget.pollId, bId, bScore);
+    // Update scores locally
+    for (int i = 0; i < items.value.length; i++) {
+      if (items.value[i].id == items.value[0].id)
+        items.value[i].score = items.value[0].score;
+    }
+    for (int i = 0; i < items.value.length; i++) {
+      if (items.value[i].id == items.value[1].id)
+        items.value[i].score = items.value[1].score;
+    }
+
+    // Update scores online
+    await databaseMethods.setScore(
+        widget.pollId, items.value[0].id, items.value[0].score);
+    await databaseMethods.setScore(
+        widget.pollId, items.value[1].id, items.value[1].score);
 
     // Refresh
-    await loadData();
+    getData();
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: isLoading
-          ? AppBar(title: Text('Poll'))
-          : AppBar(title: Text(pollName)),
+          ? AppBar(title: Text('Poll'), backgroundColor: Colors.transparent)
+          : AppBar(title: Text(pollName), backgroundColor: Colors.transparent),
       body: isLoading
           ? Container(
               child: Center(child: CircularProgressIndicator()),
             )
           : RefreshIndicator(
               onRefresh: () async => {
-                await loadData(),
+                await getData(),
               },
               child: ListView(
                 shrinkWrap: true,
@@ -132,10 +187,11 @@ class _VoteState extends State<Vote> {
                               child: Container(
                                 height: 120,
                                 width: 120,
-                                decoration: aLink != ''
+                                decoration: items.value[0].link != ''
                                     ? BoxDecoration(
                                         image: DecorationImage(
-                                          image: NetworkImage(aLink),
+                                          image:
+                                              NetworkImage(items.value[0].link),
                                           fit: BoxFit.fitWidth,
                                         ),
                                         borderRadius: BorderRadius.circular(12),
@@ -147,7 +203,7 @@ class _VoteState extends State<Vote> {
                                 child: Container(
                                   margin: EdgeInsets.fromLTRB(15, 15, 0, 0),
                                   child: Text(
-                                    aName,
+                                    items.value[0].name,
                                     style: TextStyle(
                                         color: Colors.black,
                                         fontSize: 20,
@@ -164,10 +220,11 @@ class _VoteState extends State<Vote> {
                                 child: Container(
                                   height: 120,
                                   width: 120,
-                                  decoration: bLink != ''
+                                  decoration: items.value[1].link != ''
                                       ? BoxDecoration(
                                           image: DecorationImage(
-                                            image: NetworkImage(bLink),
+                                            image: NetworkImage(
+                                                items.value[1].link),
                                             fit: BoxFit.fitWidth,
                                           ),
                                           borderRadius:
@@ -181,7 +238,7 @@ class _VoteState extends State<Vote> {
                                   child: Container(
                                     margin: EdgeInsets.fromLTRB(15, 15, 0, 0),
                                     child: Text(
-                                      bName,
+                                      items.value[1].name,
                                       style: TextStyle(
                                           color: Colors.black,
                                           fontSize: 20,
@@ -198,7 +255,7 @@ class _VoteState extends State<Vote> {
                       RaisedButton(
                         child: Icon(Icons.refresh),
                         onPressed: () async => {
-                          await loadData(),
+                          await getData(),
                         },
                       ),
                       SizedBox(height: 16),
@@ -214,7 +271,11 @@ class _VoteState extends State<Vote> {
                                   style: TextStyle(color: Colors.white),
                                 ),
                                 Text(
-                                  topItems[index],
+                                  topItems[index].name,
+                                  style: TextStyle(color: Colors.white),
+                                ),
+                                Text(
+                                  topItems[index].score.toString(),
                                   style: TextStyle(color: Colors.white),
                                 ),
                               ],

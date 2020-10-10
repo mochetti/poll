@@ -5,6 +5,7 @@ import '../widget/widget.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:firebase_storage/firebase_storage.dart';
 import 'package:path/path.dart' as Path;
+import '../models/poll.dart';
 
 class NewPoll extends StatefulWidget {
   const NewPoll({Key key}) : super(key: key);
@@ -176,7 +177,7 @@ class AddPoll extends StatefulWidget {
 
 class _AddPollState extends State<AddPoll> {
   DatabaseMethods databaseMethods = new DatabaseMethods();
-  List<pollItem> pollItems = [];
+  List<PollItem> pollItems = [];
   final picker = ImagePicker();
   String _uploadedFileURL = '';
   bool needsMedia = false;
@@ -271,7 +272,7 @@ class _AddPollState extends State<AddPoll> {
   @override
   void initState() {
     if (widget.type != 'None') needsMedia = true;
-    pollItems.add(new pollItem());
+    pollItems.add(new PollItem.TC());
     super.initState();
   }
 
@@ -291,7 +292,7 @@ class _AddPollState extends State<AddPoll> {
             tooltip: 'add item',
             onPressed: () {
               setState(() {
-                pollItems.add(new pollItem());
+                pollItems.add(new PollItem.TC());
               });
             },
           ),
@@ -351,14 +352,5 @@ class _AddPollState extends State<AddPoll> {
         },
       ),
     );
-  }
-}
-
-class pollItem {
-  File image;
-  TextEditingController controller;
-
-  pollItem() {
-    controller = new TextEditingController();
   }
 }

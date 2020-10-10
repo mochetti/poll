@@ -1,3 +1,6 @@
+import 'dart:io';
+import 'package:flutter/material.dart';
+
 class Poll {
   String name;
   String createdBy;
@@ -10,5 +13,30 @@ class Poll {
   }
   Poll.name(String n) {
     name = n;
+  }
+}
+
+class PollItem {
+  File image;
+  TextEditingController controller;
+  String name;
+  double score;
+  String id;
+  String link;
+
+  PollItem() {
+    name = '';
+    score = 0;
+    id = '';
+    link = '';
+  }
+
+  PollItem.nameAndScore(String n, double s) {
+    name = n;
+    score = s;
+  }
+
+  PollItem.TC() {
+    controller = new TextEditingController();
   }
 }
