@@ -5,6 +5,7 @@ import '../services/database.dart';
 import 'dart:math';
 import 'dart:async';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:social_share/social_share.dart';
 
 class Vote extends StatefulWidget {
   const Vote({Key key, this.pollId}) : super(key: key);
@@ -24,6 +25,8 @@ class _VoteState extends State<Vote> {
   bool proxLoading = false;
   bool firstTime = true;
   List<PollItem> topItems = [];
+  List<PollItem> myTopItems = [];
+  PageController pageController = PageController();
 
   @override
   void initState() {
@@ -71,6 +74,17 @@ class _VoteState extends State<Vote> {
           new PollItem.nameAndScore(
             poll.docs[index].get('name'),
             poll.docs[index].get('score'),
+          ),
+        );
+
+      // Load user top items
+      var myPoll = await databaseMethods.getTop(widget.pollId);
+      myTopItems = [];
+      for (int index = 0; index < myPoll.docs.length; index++)
+        myTopItems.add(
+          new PollItem.nameAndScore(
+            myPoll.docs[index].get('name'),
+            myPoll.docs[index].get('score'),
           ),
         );
 
@@ -155,12 +169,136 @@ class _VoteState extends State<Vote> {
     getData();
   }
 
+  void shareWpp() {
+    String msg = '';
+    for (int i = 0; i < myTopItems.length; i++)
+      msg += '${i + 1}: ${myTopItems[i].name}\n';
+    SocialShare.shareWhatsapp(msg);
+  }
+
+  void shareInsta() {
+    SocialShare.shareInstagramStory(null, "#ffffff", "#000000", null);
+  }
+
+  Future<void> rankingAlert() async {
+    return showDialog<void>(
+      context: context,
+      barrierDismissible: false, // user must tap button!
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: Text('Ranking'),
+          content: Container(
+              height: 200,
+              child: Column(
+                children: [
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                    children: [
+                      Column(
+                        children: [
+                          Text('Global'),
+                          SizedBox(height: 16),
+                          Column(
+                            children: [
+                              for (int i = 0; i < 5; i++)
+                                Row(
+                                  mainAxisSize: MainAxisSize.min,
+                                  mainAxisAlignment:
+                                      MainAxisAlignment.spaceEvenly,
+                                  children: [
+                                    Text(
+                                      (i + 1).toString(),
+                                      style: TextStyle(color: Colors.black),
+                                    ),
+                                    SizedBox(width: 10),
+                                    topItems.length > i
+                                        ? Text(
+                                            topItems[i].name,
+                                            style:
+                                                TextStyle(color: Colors.black),
+                                          )
+                                        : Text('-'),
+                                  ],
+                                ),
+                            ],
+                          ),
+                        ],
+                      ),
+                      Column(
+                        children: [
+                          Text('Personal'),
+                          SizedBox(height: 16),
+                          Column(
+                            children: [
+                              for (int i = 0; i < 5; i++)
+                                Row(
+                                  mainAxisSize: MainAxisSize.min,
+                                  mainAxisAlignment:
+                                      MainAxisAlignment.spaceEvenly,
+                                  children: [
+                                    Text(
+                                      (i + 1).toString(),
+                                      style: TextStyle(color: Colors.black),
+                                    ),
+                                    SizedBox(width: 10),
+                                    myTopItems.length > i
+                                        ? Text(
+                                            myTopItems[i].name,
+                                            style:
+                                                TextStyle(color: Colors.black),
+                                          )
+                                        : Text('-'),
+                                  ],
+                                ),
+                            ],
+                          ),
+                        ],
+                      ),
+                    ],
+                  ),
+                  SizedBox(height: 40),
+                  Row(
+                    children: [
+                      RaisedButton(
+                        child: Text('Wpp'),
+                        onPressed: shareWpp,
+                      ),
+                      RaisedButton(
+                        child: Text('Insta'),
+                        onPressed: shareInsta,
+                      ),
+                    ],
+                  ),
+                ],
+              )),
+          actions: <Widget>[
+            TextButton(
+              child: Text('Ok'),
+              onPressed: () {
+                Navigator.of(context).pop();
+              },
+            ),
+          ],
+        );
+      },
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: isLoading
           ? AppBar(title: Text('Poll'), backgroundColor: Colors.transparent)
-          : AppBar(title: Text(pollName), backgroundColor: Colors.transparent),
+          : AppBar(
+              title: Text(pollName),
+              backgroundColor: Colors.transparent,
+              actions: [
+                IconButton(
+                  icon: Icon(Icons.info),
+                  onPressed: () => rankingAlert(),
+                )
+              ],
+            ),
       body: isLoading
           ? Container(
               child: Center(child: CircularProgressIndicator()),
@@ -182,40 +320,59 @@ class _VoteState extends State<Vote> {
                       Row(
                         mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                         children: [
-                          Column(children: [
-                            CupertinoButton(
-                              child: Container(
-                                height: 120,
-                                width: 120,
-                                decoration: items.value[0].link != ''
-                                    ? BoxDecoration(
-                                        image: DecorationImage(
-                                          image:
-                                              NetworkImage(items.value[0].link),
-                                          fit: BoxFit.fitWidth,
-                                        ),
-                                        borderRadius: BorderRadius.circular(12),
-                                      )
-                                    : BoxDecoration(
-                                        color: Colors.yellow,
-                                        borderRadius: BorderRadius.circular(12),
-                                      ),
-                                child: Container(
-                                  margin: EdgeInsets.fromLTRB(15, 15, 0, 0),
-                                  child: Text(
-                                    items.value[0].name,
-                                    style: TextStyle(
-                                        color: Colors.black,
-                                        fontSize: 20,
-                                        fontWeight: FontWeight.w600),
-                                  ),
-                                ),
-                              ),
-                              onPressed: () => compute(true),
-                            ),
-                          ]),
                           Column(
                             children: [
+                              items.value[0].link != ''
+                                  ? Text(
+                                      items.value[0].name,
+                                      style: TextStyle(color: Colors.white),
+                                    )
+                                  : Container(),
+                              CupertinoButton(
+                                child: Container(
+                                  height: 120,
+                                  width: 120,
+                                  decoration: items.value[0].link != ''
+                                      ? BoxDecoration(
+                                          image: DecorationImage(
+                                            image: NetworkImage(
+                                                items.value[0].link),
+                                            fit: BoxFit.fitWidth,
+                                          ),
+                                          borderRadius:
+                                              BorderRadius.circular(12),
+                                        )
+                                      : BoxDecoration(
+                                          color: Colors.yellow,
+                                          borderRadius:
+                                              BorderRadius.circular(12),
+                                        ),
+                                  child: items.value[0].link != ''
+                                      ? Container()
+                                      : Container(
+                                          margin:
+                                              EdgeInsets.fromLTRB(15, 15, 0, 0),
+                                          child: Text(
+                                            items.value[0].name,
+                                            style: TextStyle(
+                                                color: Colors.black,
+                                                fontSize: 20,
+                                                fontWeight: FontWeight.w600),
+                                          ),
+                                        ),
+                                ),
+                                onPressed: () => compute(true),
+                              ),
+                            ],
+                          ),
+                          Column(
+                            children: [
+                              items.value[1].link != ''
+                                  ? Text(
+                                      items.value[1].name,
+                                      style: TextStyle(color: Colors.white),
+                                    )
+                                  : Container(),
                               CupertinoButton(
                                 child: Container(
                                   height: 120,
@@ -235,18 +392,21 @@ class _VoteState extends State<Vote> {
                                           borderRadius:
                                               BorderRadius.circular(12),
                                         ),
-                                  child: Container(
-                                    margin: EdgeInsets.fromLTRB(15, 15, 0, 0),
-                                    child: Text(
-                                      items.value[1].name,
-                                      style: TextStyle(
-                                          color: Colors.black,
-                                          fontSize: 20,
-                                          fontWeight: FontWeight.w600),
-                                    ),
-                                  ),
+                                  child: items.value[1].link != ''
+                                      ? Container()
+                                      : Container(
+                                          margin:
+                                              EdgeInsets.fromLTRB(15, 15, 0, 0),
+                                          child: Text(
+                                            items.value[0].name,
+                                            style: TextStyle(
+                                                color: Colors.black,
+                                                fontSize: 20,
+                                                fontWeight: FontWeight.w600),
+                                          ),
+                                        ),
                                 ),
-                                onPressed: () => compute(false),
+                                onPressed: () => compute(true),
                               ),
                             ],
                           ),
@@ -259,28 +419,6 @@ class _VoteState extends State<Vote> {
                         },
                       ),
                       SizedBox(height: 16),
-                      ListView.builder(
-                          shrinkWrap: true,
-                          itemCount: topItems.length,
-                          itemBuilder: (context, index) {
-                            return Row(
-                              mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                              children: [
-                                Text(
-                                  (index + 1).toString(),
-                                  style: TextStyle(color: Colors.white),
-                                ),
-                                Text(
-                                  topItems[index].name,
-                                  style: TextStyle(color: Colors.white),
-                                ),
-                                Text(
-                                  topItems[index].score.toString(),
-                                  style: TextStyle(color: Colors.white),
-                                ),
-                              ],
-                            );
-                          }),
                     ],
                   ),
                 ],

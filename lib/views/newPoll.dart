@@ -1,5 +1,6 @@
 import 'dart:io';
 import 'package:flutter/material.dart';
+import 'package:flutter/rendering.dart';
 import '../services/database.dart';
 import '../widget/widget.dart';
 import 'package:image_picker/image_picker.dart';
@@ -27,35 +28,25 @@ class _NewPollState extends State<NewPoll> {
     if (newPollTC.text.isNotEmpty) {
       // Get poll's id
       await databaseMethods.getPollId(newPollTC.text).then((snapshot) {
-        newPollDialog(false);
+        newPollDialog('Do you want to create ${newPollTC.text}?', false);
       });
 
       setState(() {
         // isLoading = true;
       });
     } else {
-      newPollDialog(true);
+      newPollDialog('Invalid name!', true);
     }
   }
 
-  Future<void> newPollDialog(bool error) async {
+  Future<void> newPollDialog(String txt, bool error) async {
     return showDialog<void>(
       context: context,
       barrierDismissible: false, // user must tap button!
       builder: (BuildContext context) {
         return AlertDialog(
-          title: error ? Text('Error') : Text('Create Poll'),
-          content: SingleChildScrollView(
-            child: ListBody(
-              children: error
-                  ? <Widget>[
-                      Text('Please provide a name!'),
-                    ]
-                  : <Widget>[
-                      Text('Do you want to create the poll ${newPollTC.text}?')
-                    ],
-            ),
-          ),
+          title: Text('Create Poll'),
+          content: Text(txt),
           actions: <Widget>[
             TextButton(
               child: Text('Cancel'),
@@ -71,10 +62,7 @@ class _NewPollState extends State<NewPoll> {
                       Navigator.push(
                         context,
                         MaterialPageRoute(
-                          builder: (context) => AddPoll(
-                            poll: newPollTC.text,
-                            type: dropdownValue,
-                          ),
+                          builder: (context) => AddPoll(poll: newPollTC.text),
                         ),
                       )
                     },
@@ -134,30 +122,6 @@ class _NewPollState extends State<NewPoll> {
             ),
           ),
           SizedBox(height: 30),
-          DropdownButton<String>(
-            value: dropdownValue,
-            icon: Icon(Icons.arrow_downward),
-            iconSize: 24,
-            elevation: 16,
-            style: TextStyle(color: Colors.deepPurple),
-            underline: Container(
-              height: 2,
-              color: Colors.deepPurpleAccent,
-            ),
-            onChanged: (String newValue) {
-              setState(() {
-                dropdownValue = newValue;
-              });
-            },
-            items: <String>['None', 'Photo', 'Video', 'Gif']
-                .map<DropdownMenuItem<String>>((String value) {
-              return DropdownMenuItem<String>(
-                value: value,
-                child: Text(value),
-              );
-            }).toList(),
-          ),
-          SizedBox(height: 30),
           RaisedButton(child: Text('Create'), onPressed: createPoll),
         ],
       )),
@@ -166,10 +130,9 @@ class _NewPollState extends State<NewPoll> {
 }
 
 class AddPoll extends StatefulWidget {
-  const AddPoll({Key key, this.poll, this.type}) : super(key: key);
+  const AddPoll({Key key, this.poll}) : super(key: key);
 
   final String poll;
-  final String type;
 
   @override
   _AddPollState createState() => _AddPollState();
@@ -180,7 +143,6 @@ class _AddPollState extends State<AddPoll> {
   List<PollItem> pollItems = [];
   final picker = ImagePicker();
   String _uploadedFileURL = '';
-  bool needsMedia = false;
   bool isLoading = false;
 
   Future chooseFile(int index) async {
@@ -189,6 +151,7 @@ class _AddPollState extends State<AddPoll> {
     setState(() {
       if (pickedFile != null) {
         pollItems[index].image = File(pickedFile.path);
+        pollItems[index].hasMedia = true;
       } else {
         print('empty image');
       }
@@ -207,16 +170,29 @@ class _AddPollState extends State<AddPoll> {
     });
   }
 
+  void checkItems() {
+    // Check if all items have name and image
+    for (int i = 0; i < pollItems.length; i++) {
+      if (pollItems[i].controller.text == '') {
+        submitDialog(true, 'There are items with empty names!');
+        return;
+      }
+    }
+    for (int i = 0; i < pollItems.length; i++) {
+      if (pollItems[i].hasMedia == false) {
+        submitDialog(false, 'There are items without image. Continue anyway?');
+        return;
+      }
+    }
+    uploadPoll();
+  }
+
   Future uploadPoll() async {
     setState(() {
       isLoading = true;
     });
     // add poll to polls
-    Map<String, String> pollData = {
-      "name": widget.poll,
-      "type": widget.type,
-      "createdBy": 'user'
-    };
+    Map<String, String> pollData = {"name": widget.poll, "createdBy": 'user'};
     databaseMethods.addPoll(pollData);
 
     // Get poll's id
@@ -262,18 +238,40 @@ class _AddPollState extends State<AddPoll> {
     Map<String, String> pollUser = {"id": docId};
     databaseMethods.addUserPoll(pollUser);
 
-    // setState(() {
-    //   isLoading = false;
-    // });
-
-    Navigator.pop(context);
+    Navigator.of(context).popUntil((route) => route.isFirst);
   }
 
   @override
   void initState() {
-    if (widget.type != 'None') needsMedia = true;
     pollItems.add(new PollItem.TC());
     super.initState();
+  }
+
+  Future<void> submitDialog(bool error, String txt) async {
+    return showDialog<void>(
+      context: context,
+      barrierDismissible: false, // user must tap button!
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: Text('Submit Poll'),
+          content: Text(txt),
+          actions: <Widget>[
+            TextButton(
+              child: Text('Cancel'),
+              onPressed: () {
+                Navigator.of(context).pop();
+              },
+            ),
+            error
+                ? Container()
+                : TextButton(
+                    child: Text('Ok'),
+                    onPressed: uploadPoll,
+                  )
+          ],
+        );
+      },
+    );
   }
 
   void dispose() {
@@ -323,8 +321,7 @@ class _AddPollState extends State<AddPoll> {
                       Expanded(
                         child: TextField(
                           controller: pollItems[index].controller,
-                          // onChanged: (String text) =>
-                          //     {pollItems[index].controller.text = text},
+                          onEditingComplete: () => {setState(() {})},
                           style: simpleTextStyle(),
                           decoration: InputDecoration(
                               hintText: "add item name ...",
@@ -335,12 +332,19 @@ class _AddPollState extends State<AddPoll> {
                               border: InputBorder.none),
                         ),
                       ),
-                      needsMedia
-                          ? IconButton(
-                              icon: Icon(Icons.image),
-                              onPressed: () => chooseFile(index),
-                            )
-                          : Container()
+                      Icon(
+                        Icons.text_fields,
+                        color: pollItems[index].controller.text != ''
+                            ? Colors.green
+                            : Colors.black,
+                      ),
+                      IconButton(
+                        icon: Icon(Icons.image),
+                        color: pollItems[index].hasMedia
+                            ? Colors.green
+                            : Colors.black,
+                        onPressed: () => chooseFile(index),
+                      ),
                     ],
                   ),
                 );
@@ -348,7 +352,7 @@ class _AddPollState extends State<AddPoll> {
       floatingActionButton: FloatingActionButton(
         child: Icon(Icons.send),
         onPressed: () {
-          uploadPoll();
+          checkItems();
         },
       ),
     );

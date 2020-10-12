@@ -30,6 +30,7 @@ dependencies:
   firebase_storage: "4.0.1"
 
   image_picker: "0.6.7"
+  social_share: "2.0.5"
 
   google_sign_in: "4.5.4"
   flutter_facebook_auth: "0.3.2"

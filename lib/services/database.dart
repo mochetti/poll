@@ -39,6 +39,7 @@ class DatabaseMethods {
   getTrending() async {
     return FirebaseFirestore.instance
         .collection('polls')
+        .orderBy('pop', descending: true)
         .limit(5)
         .get()
         .catchError((e) {
@@ -171,12 +172,12 @@ class DatabaseMethods {
         .set(itemData);
   }
 
-  searchByName(String searchField) {
-    return FirebaseFirestore.instance
-        .collection("users")
-        .where('userName', isEqualTo: searchField)
-        .get();
-  }
+  // searchByName(String searchField) {
+  //   return FirebaseFirestore.instance
+  //       .collection("users")
+  //       .where('userName', isEqualTo: searchField)
+  //       .get();
+  // }
 
   searchByPollName(String searchField) {
     return FirebaseFirestore.instance
@@ -184,42 +185,5 @@ class DatabaseMethods {
         .where('name', isGreaterThanOrEqualTo: searchField)
         .where('name', isLessThan: '$searchField\uF7FF')
         .get();
-  }
-
-  Future<bool> addChatRoom(chatRoom, chatRoomId) {
-    FirebaseFirestore.instance
-        .collection("chatRoom")
-        .doc(chatRoomId)
-        .set(chatRoom)
-        .catchError((e) {
-      print(e);
-    });
-  }
-
-  getChats(String chatRoomId) async {
-    return FirebaseFirestore.instance
-        .collection("chatRoom")
-        .doc(chatRoomId)
-        .collection("chats")
-        .orderBy('time')
-        .snapshots();
-  }
-
-  Future<void> addMessage(String chatRoomId, chatMessageData) {
-    FirebaseFirestore.instance
-        .collection("chatRoom")
-        .doc(chatRoomId)
-        .collection("chats")
-        .add(chatMessageData)
-        .catchError((e) {
-      print(e.toString());
-    });
-  }
-
-  getUserChats(String itIsMyName) async {
-    return await FirebaseFirestore.instance
-        .collection("chatRoom")
-        .where('users', arrayContains: itIsMyName)
-        .snapshots();
   }
 }

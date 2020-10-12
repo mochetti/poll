@@ -2,12 +2,10 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 
-import 'search.dart';
 import 'vote.dart';
 import '../services/database.dart';
 import '../models/poll.dart';
 import 'newPoll.dart';
-import '../models/user.dart';
 
 class Profile extends StatefulWidget {
   const Profile({Key key}) : super(key: key);
@@ -32,7 +30,7 @@ class _ProfileState extends State<Profile> {
     });
     myPolls = [];
     for (int index = 0; index < query.docs.length; index++) {
-      print(query.docs[index].get('id'));
+      // print(query.docs[index].get('id'));
       await databaseMethods.getPoll(query.docs[index].get('id')).then(
         (snapshot) {
           DocumentSnapshot q = snapshot;

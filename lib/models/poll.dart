@@ -19,17 +19,13 @@ class Poll {
 class PollItem {
   File image;
   TextEditingController controller;
-  String name;
-  double score;
-  String id;
-  String link;
+  String name = '';
+  double score = 0;
+  String id = '';
+  String link = '';
+  bool hasMedia = false;
 
-  PollItem() {
-    name = '';
-    score = 0;
-    id = '';
-    link = '';
-  }
+  PollItem() {}
 
   PollItem.nameAndScore(String n, double s) {
     name = n;

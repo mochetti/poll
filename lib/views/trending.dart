@@ -67,8 +67,8 @@ class _TrendingState extends State<Trending> {
                 itemBuilder: (context, index) {
                   return CupertinoButton(
                     child: Container(
-                      height: 200,
-                      width: 200,
+                      height: 220,
+                      width: 220,
                       decoration: BoxDecoration(
                         color: Colors.yellowAccent,
                         // image: DecorationImage(
@@ -79,12 +79,23 @@ class _TrendingState extends State<Trending> {
                       ),
                       child: Container(
                         margin: EdgeInsets.fromLTRB(15, 15, 0, 0),
-                        child: Text(
-                          trendingPolls[index].name,
-                          style: TextStyle(
-                              color: Colors.black,
-                              fontSize: 20,
-                              fontWeight: FontWeight.w600),
+                        child: Column(
+                          children: [
+                            Text(
+                              trendingPolls[index].name,
+                              style: TextStyle(
+                                  color: Colors.black,
+                                  fontSize: 20,
+                                  fontWeight: FontWeight.w600),
+                            ),
+                            Text(
+                              'by: ${trendingPolls[index].createdBy}',
+                              style: TextStyle(
+                                  color: Colors.black,
+                                  fontSize: 20,
+                                  fontWeight: FontWeight.w600),
+                            ),
+                          ],
                         ),
                       ),
                     ),
