@@ -11,10 +11,22 @@ class DatabaseMethods {
     });
   }
 
+  // get info using email
   getUserInfo(String email) async {
     return FirebaseFirestore.instance
         .collection("users")
         .where("email", isEqualTo: email)
+        .get()
+        .catchError((e) {
+      print(e.toString());
+    });
+  }
+
+  // get user using id
+  getUser(String id) async {
+    return FirebaseFirestore.instance
+        .collection("users")
+        .doc(id)
         .get()
         .catchError((e) {
       print(e.toString());

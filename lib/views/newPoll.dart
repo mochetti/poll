@@ -1,6 +1,7 @@
 import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
+import 'package:poll/models/user.dart';
 import '../services/database.dart';
 import '../widget/widget.dart';
 import 'package:image_picker/image_picker.dart';
@@ -192,7 +193,11 @@ class _AddPollState extends State<AddPoll> {
       isLoading = true;
     });
     // add poll to polls
-    Map<String, String> pollData = {"name": widget.poll, "createdBy": 'user'};
+    Map<String, dynamic> pollData = {
+      "name": widget.poll,
+      "creator": userQuery.docs[0].id,
+      "pop": 0
+    };
     databaseMethods.addPoll(pollData);
 
     // Get poll's id
@@ -216,6 +221,7 @@ class _AddPollState extends State<AddPoll> {
 
     // add each poll item
     for (int index = 0; index < pollItems.length; index++) {
+      _uploadedFileURL = '';
       if (pollItems[index].image != null)
         await uploadFile(pollItems[index].image);
 

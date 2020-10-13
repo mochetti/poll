@@ -69,24 +69,25 @@ class _VoteState extends State<Vote> {
       // Load top items
       var poll = await databaseMethods.getTop(widget.pollId);
       topItems = [];
-      for (int index = 0; index < poll.docs.length; index++)
+      for (int index = 0; index < poll.docs.length; index++) {
         topItems.add(
           new PollItem.nameAndScore(
             poll.docs[index].get('name'),
-            poll.docs[index].get('score'),
+            poll.docs[index].get('score').toDouble(),
           ),
         );
+      }
 
       // Load user top items
-      var myPoll = await databaseMethods.getTop(widget.pollId);
-      myTopItems = [];
-      for (int index = 0; index < myPoll.docs.length; index++)
-        myTopItems.add(
-          new PollItem.nameAndScore(
-            myPoll.docs[index].get('name'),
-            myPoll.docs[index].get('score'),
-          ),
-        );
+      // var myPoll = await databaseMethods.getTop(widget.pollId);
+      // myTopItems = [];
+      // for (int index = 0; index < myPoll.docs.length; index++)
+      //   myTopItems.add(
+      //     new PollItem.nameAndScore(
+      //       myPoll.docs[index].get('name'),
+      //       myPoll.docs[index].get('score').toDouble(),
+      //     ),
+      //   );
 
       setState(() {
         isLoading = false;
@@ -170,14 +171,14 @@ class _VoteState extends State<Vote> {
   }
 
   void shareWpp() {
-    String msg = '';
+    String msg = 'My Top in $pollName:';
     for (int i = 0; i < myTopItems.length; i++)
       msg += '${i + 1}: ${myTopItems[i].name}\n';
     SocialShare.shareWhatsapp(msg);
   }
 
   void shareInsta() {
-    SocialShare.shareInstagramStory(null, "#ffffff", "#000000", null);
+    // SocialShare.shareInstagramStory(null, "#ffffff", "#000000", null);
   }
 
   Future<void> rankingAlert() async {
@@ -398,7 +399,7 @@ class _VoteState extends State<Vote> {
                                           margin:
                                               EdgeInsets.fromLTRB(15, 15, 0, 0),
                                           child: Text(
-                                            items.value[0].name,
+                                            items.value[1].name,
                                             style: TextStyle(
                                                 color: Colors.black,
                                                 fontSize: 20,
@@ -406,7 +407,7 @@ class _VoteState extends State<Vote> {
                                           ),
                                         ),
                                 ),
-                                onPressed: () => compute(true),
+                                onPressed: () => compute(false),
                               ),
                             ],
                           ),

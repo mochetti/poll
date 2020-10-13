@@ -22,9 +22,6 @@ class _ProfileState extends State<Profile> {
   bool isLoading = false;
 
   Future<void> loadData() async {
-    setState(() {
-      isLoading = true;
-    });
     await databaseMethods.getUserPolls().then((snapshot) {
       query = snapshot;
     });
@@ -45,6 +42,9 @@ class _ProfileState extends State<Profile> {
 
   @override
   void initState() {
+    setState(() {
+      isLoading = true;
+    });
     loadData();
     super.initState();
   }
@@ -78,52 +78,55 @@ class _ProfileState extends State<Profile> {
           ? Container(
               child: Center(child: CircularProgressIndicator()),
             )
-          : GridView.builder(
-              gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-                crossAxisCount: 2,
-                mainAxisSpacing: 10,
-                crossAxisSpacing: 10,
-              ),
-              physics: const BouncingScrollPhysics(
-                  parent: AlwaysScrollableScrollPhysics()),
-              primary: false,
-              padding: const EdgeInsets.all(20),
-              itemCount: myPolls.length,
-              itemBuilder: (context, index) {
-                return CupertinoButton(
-                  child: Container(
-                    height: 200,
-                    width: 200,
-                    decoration: BoxDecoration(
-                      color: Colors.yellowAccent,
-                      // image: DecorationImage(
-                      //   image: AssetImage("assets/mindful.jpg"),
-                      //   fit: BoxFit.cover,
-                      // ),
-                      borderRadius: BorderRadius.circular(12),
-                    ),
+          : RefreshIndicator(
+              onRefresh: loadData,
+              child: GridView.builder(
+                gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+                  crossAxisCount: 2,
+                  mainAxisSpacing: 10,
+                  crossAxisSpacing: 10,
+                ),
+                physics: const BouncingScrollPhysics(
+                    parent: AlwaysScrollableScrollPhysics()),
+                primary: false,
+                padding: const EdgeInsets.all(20),
+                itemCount: myPolls.length,
+                itemBuilder: (context, index) {
+                  return CupertinoButton(
                     child: Container(
-                      margin: EdgeInsets.fromLTRB(15, 15, 0, 0),
-                      child: Text(
-                        myPolls[index].name,
-                        style: TextStyle(
-                            color: Colors.black,
-                            fontSize: 20,
-                            fontWeight: FontWeight.w600),
+                      height: 200,
+                      width: 200,
+                      decoration: BoxDecoration(
+                        color: Colors.yellowAccent,
+                        // image: DecorationImage(
+                        //   image: AssetImage("assets/mindful.jpg"),
+                        //   fit: BoxFit.cover,
+                        // ),
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      child: Container(
+                        margin: EdgeInsets.fromLTRB(15, 15, 0, 0),
+                        child: Text(
+                          myPolls[index].name,
+                          style: TextStyle(
+                              color: Colors.black,
+                              fontSize: 20,
+                              fontWeight: FontWeight.w600),
+                        ),
                       ),
                     ),
-                  ),
-                  onPressed: () => {
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                        builder: (context) =>
-                            Vote(pollId: query.docs[index].get('id')),
+                    onPressed: () => {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) =>
+                              Vote(pollId: query.docs[index].get('id')),
+                        ),
                       ),
-                    ),
-                  },
-                );
-              },
+                    },
+                  );
+                },
+              ),
             ),
     );
   }

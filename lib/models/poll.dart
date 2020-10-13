@@ -3,12 +3,12 @@ import 'package:flutter/material.dart';
 
 class Poll {
   String name;
-  String createdBy;
+  String creator;
   String first;
   String id;
   Poll(String n, String c, String i) {
     name = n;
-    createdBy = c;
+    creator = c;
     id = i;
   }
   Poll.name(String n) {
@@ -25,7 +25,7 @@ class PollItem {
   String link = '';
   bool hasMedia = false;
 
-  PollItem() {}
+  PollItem();
 
   PollItem.nameAndScore(String n, double s) {
     name = n;

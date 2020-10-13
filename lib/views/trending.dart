@@ -26,8 +26,15 @@ class _TrendingState extends State<Trending> {
     });
     trendingPolls = [];
     for (int index = 0; index < query.docs.length; index++) {
-      trendingPolls.add(new Poll(query.docs[index].get('name'),
-          query.docs[index].get('createdBy'), query.docs[index].id));
+      DocumentSnapshot creatorDoc;
+      String creator = 'anonymous';
+      if (query.docs[index].get('creator') != 'anonymous') {
+        creatorDoc =
+            await databaseMethods.getUser(query.docs[index].get('creator'));
+        creator = creatorDoc.get('name');
+      }
+      trendingPolls.add(new Poll(
+          query.docs[index].get('name'), creator, query.docs[index].id));
     }
     setState(() {
       isLoading = false;
@@ -89,7 +96,7 @@ class _TrendingState extends State<Trending> {
                                   fontWeight: FontWeight.w600),
                             ),
                             Text(
-                              'by: ${trendingPolls[index].createdBy}',
+                              'by: ${trendingPolls[index].creator}',
                               style: TextStyle(
                                   color: Colors.black,
                                   fontSize: 20,
