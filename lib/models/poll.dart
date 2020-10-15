@@ -25,7 +25,14 @@ class PollItem {
   String link = '';
   bool hasMedia = false;
 
-  PollItem();
+  PollItem({String name, double score, String id, String link}) {
+    this.name = name;
+    this.score = score;
+    this.id = id;
+    this.link = link;
+    this.controller = new TextEditingController(text: name);
+    if (link != '') this.hasMedia = true;
+  }
 
   PollItem.nameAndScore(String n, double s) {
     name = n;

@@ -39,7 +39,6 @@ class _VoteState extends State<Vote> {
 
   Future<void> getData() async {
     print('Getting data...');
-    // print('length: ${items.value.length}');
 
     if (items.value.length <= 1) {
       setState(() {
@@ -48,23 +47,22 @@ class _VoteState extends State<Vote> {
       Timer(
         const Duration(milliseconds: 500),
         () => {
-          if (!proxLoading)
+          if (firstTime)
             {
               loadData(),
-              proxLoading = true,
+              firstTime = false,
             },
           getData(),
         },
       );
     } else {
-      proxLoading = false;
       // Remove last items
       if (items.value.length >= 4) {
         items.value.removeAt(1);
         items.value.removeAt(0);
       }
-
-      loadData();
+      print('length: ${items.value.length}');
+      if (!proxLoading) loadData();
 
       // Load top items
       var poll = await databaseMethods.getTop(widget.pollId);
@@ -97,7 +95,9 @@ class _VoteState extends State<Vote> {
   }
 
   Future<void> loadData() async {
-    while (items.value.length < 10) {
+    while (items.value.length < 20) {
+      proxLoading = true;
+
       // Get poll name
       var poll = await databaseMethods.getPoll(widget.pollId);
       pollName = poll.get("name");
@@ -133,6 +133,8 @@ class _VoteState extends State<Vote> {
 
       items.notifyListeners();
     }
+    print('tamanho max: ${items.value.length}');
+    proxLoading = false;
   }
 
   void compute(bool aWon) async {

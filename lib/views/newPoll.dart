@@ -1,4 +1,5 @@
 import 'dart:io';
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
 import 'package:poll/models/user.dart';
@@ -20,10 +21,6 @@ class _NewPollState extends State<NewPoll> {
   DatabaseMethods databaseMethods = new DatabaseMethods();
   TextEditingController newPollTC;
   String dropdownValue = 'None';
-
-  File image;
-  final picker = ImagePicker();
-  String _uploadedFileURL;
 
   createPoll() async {
     if (newPollTC.text.isNotEmpty) {
@@ -142,8 +139,8 @@ class AddPoll extends StatefulWidget {
 class _AddPollState extends State<AddPoll> {
   DatabaseMethods databaseMethods = new DatabaseMethods();
   List<PollItem> pollItems = [];
+  String pollId;
   final picker = ImagePicker();
-  String _uploadedFileURL = '';
   bool isLoading = false;
 
   Future chooseFile(int index) async {
@@ -159,16 +156,17 @@ class _AddPollState extends State<AddPoll> {
     });
   }
 
-  Future<void> uploadFile(File image) async {
+  Future<String> uploadFile(File image) async {
     StorageReference storageReference = FirebaseStorage.instance
         .ref()
-        .child('${widget.poll}/${Path.basename(image.path)}}');
+        .child('${pollId}/${Path.basename(image.path)}');
     StorageUploadTask uploadTask = storageReference.putFile(image);
     await uploadTask.onComplete;
     print('File Uploaded');
     await storageReference.getDownloadURL().then((fileURL) {
-      _uploadedFileURL = fileURL;
+      return fileURL;
     });
+    return '';
   }
 
   void checkItems() {
@@ -198,50 +196,40 @@ class _AddPollState extends State<AddPoll> {
       "creator": userQuery.docs[0].id,
       "pop": 0
     };
-    databaseMethods.addPoll(pollData);
+    DocumentSnapshot poll = databaseMethods.addPoll(pollData);
 
     // Get poll's id
-    String docId;
-    await databaseMethods.getPollId(widget.poll).then((snapshot) {
-      docId = snapshot.docs[0].id;
-    });
-    print('docId = $docId');
+    // String pollId;
+    // await databaseMethods.getPollId(widget.poll).then((snapshot) {
+    //   pollId = snapshot.docs[0].id;
+    // });
+    pollId = poll.id;
+    print('docId = $pollId');
 
     // add poll to utils
-    Map<String, dynamic> utilsData = {"id": docId, "qnt": 0};
+    Map<String, dynamic> utilsData = {"id": pollId, "qnt": pollItems.length};
     databaseMethods.addUtils(utilsData);
-
-    // Get utils qnt and id
-    int qnt = 0;
-    String qntId = '';
-    await databaseMethods.getQnt(docId).then((snapshot) {
-      qnt = snapshot.docs[0].get("qnt");
-      qntId = snapshot.docs[0].id;
-    });
 
     // add each poll item
     for (int index = 0; index < pollItems.length; index++) {
-      _uploadedFileURL = '';
+      String link = '';
       if (pollItems[index].image != null)
-        await uploadFile(pollItems[index].image);
+        link = await uploadFile(pollItems[index].image);
 
       Map<String, dynamic> itemData = {
-        "id": qnt + index,
+        "id": index,
         "name": pollItems[index].controller.text,
-        "link": _uploadedFileURL,
+        "link": link,
         "score": 800
       };
       // Add poll to polls
       print('Adding poll to polls');
-      databaseMethods.addPollItem(docId, itemData);
+      databaseMethods.addPollItem(pollId, itemData);
     }
-
-    // Update qnt in utils
-    databaseMethods.setQnt(qntId, qnt + pollItems.length);
 
     // Add poll to user
     print('Adding poll to user');
-    Map<String, String> pollUser = {"id": docId};
+    Map<String, String> pollUser = {"id": pollId};
     databaseMethods.addUserPoll(pollUser);
 
     Navigator.of(context).popUntil((route) => route.isFirst);
@@ -311,8 +299,8 @@ class _AddPollState extends State<AddPoll> {
               itemBuilder: (context, index) {
                 return Dismissible(
                   key: UniqueKey(),
+                  direction: DismissDirection.endToStart,
                   onDismissed: (direction) {
-                    // Remove the item from the data source.
                     setState(() {
                       pollItems.removeAt(index);
                     });
@@ -323,7 +311,16 @@ class _AddPollState extends State<AddPoll> {
                     child: Icon(Icons.delete),
                   ),
                   child: Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
+                      Text(
+                        (index + 1).toString(),
+                        style: TextStyle(
+                          color: Colors.white,
+                          fontSize: 16,
+                        ),
+                      ),
+                      SizedBox(width: 20),
                       Expanded(
                         child: TextField(
                           controller: pollItems[index].controller,
@@ -342,14 +339,269 @@ class _AddPollState extends State<AddPoll> {
                         Icons.text_fields,
                         color: pollItems[index].controller.text != ''
                             ? Colors.green
-                            : Colors.black,
+                            : Colors.red,
                       ),
-                      IconButton(
-                        icon: Icon(Icons.image),
-                        color: pollItems[index].hasMedia
+                      SizedBox(width: 20),
+                      Container(
+                        height: 100,
+                        width: 100,
+                        child: !pollItems[index].hasMedia
+                            ? IconButton(
+                                icon: Icon(Icons.image),
+                                color: Colors.red,
+                                onPressed: () => chooseFile(index),
+                              )
+                            : Image.file(pollItems[index].image,
+                                fit: BoxFit.cover),
+                      ),
+                    ],
+                  ),
+                );
+              }),
+      floatingActionButton: FloatingActionButton(
+        child: Icon(Icons.send),
+        onPressed: () {
+          checkItems();
+        },
+      ),
+    );
+  }
+}
+
+class EditPoll extends StatefulWidget {
+  const EditPoll({Key key, this.pollId}) : super(key: key);
+
+  final String pollId;
+
+  @override
+  _EditPollState createState() => _EditPollState();
+}
+
+class _EditPollState extends State<EditPoll> {
+  DatabaseMethods databaseMethods = new DatabaseMethods();
+  List<PollItem> pollItems = [];
+  String pollName = '';
+  final picker = ImagePicker();
+  bool isLoading = false;
+
+  Future chooseFile(int index) async {
+    final pickedFile = await picker.getImage(source: ImageSource.gallery);
+
+    setState(() {
+      if (pickedFile != null) {
+        pollItems[index].image = File(pickedFile.path);
+        pollItems[index].hasMedia = true;
+      } else {
+        print('empty image');
+      }
+    });
+  }
+
+  Future<void> uploadFile(File image, int itemId) async {
+    StorageReference storageReference = FirebaseStorage.instance
+        .ref()
+        .child('${widget.pollId}/${Path.basename(image.path)}');
+    StorageUploadTask uploadTask = storageReference.putFile(image);
+    await uploadTask.onComplete;
+    print('File Uploaded');
+    await storageReference.getDownloadURL().then((fileURL) {
+      pollItems[itemId].link = fileURL;
+    });
+  }
+
+  void checkItems() {
+    // Check if all items have name and image
+    for (int i = 0; i < pollItems.length; i++) {
+      if (pollItems[i].controller.text == '') {
+        submitDialog(true, 'There are items with empty names!');
+        return;
+      }
+    }
+    for (int i = 0; i < pollItems.length; i++) {
+      if (pollItems[i].hasMedia == false) {
+        submitDialog(false, 'There are items without image. Continue anyway?');
+        return;
+      }
+    }
+    uploadPoll();
+  }
+
+  Future uploadPoll() async {
+    setState(() {
+      isLoading = true;
+    });
+
+    // delete previous items
+    await databaseMethods.deletePollItems(widget.pollId);
+
+    // add each poll item
+    for (int index = 0; index < pollItems.length; index++) {
+      if (pollItems[index].image != null)
+        await uploadFile(pollItems[index].image, index);
+
+      Map<String, dynamic> itemData = {
+        "id": index,
+        "name": pollItems[index].controller.text,
+        "link": pollItems[index].link,
+        "score": pollItems[index].score,
+      };
+      // Add poll to polls
+      print('Adding poll to polls');
+      databaseMethods.addPollItem(widget.pollId, itemData);
+    }
+
+    // Update qnt in utils
+    databaseMethods.setQnt(widget.pollId, pollItems.length);
+
+    // Add poll to user
+    print('Adding poll to user');
+    Map<String, String> pollUser = {"id": widget.pollId};
+    databaseMethods.addUserPoll(pollUser);
+
+    Navigator.of(context).popUntil((route) => route.isFirst);
+  }
+
+  void loadData() async {
+    // get poll name
+    DocumentSnapshot pollSnap = await databaseMethods.getPoll(widget.pollId);
+    pollName = pollSnap.get('name');
+    // load pollItems with current poll's items
+    QuerySnapshot poll = await databaseMethods.getPollItems(widget.pollId);
+    for (int i = 0; i < poll.docs.length; i++)
+      pollItems.add(PollItem(
+          name: poll.docs[i].get('name'),
+          link: poll.docs[i].get('link'),
+          score: poll.docs[i].get('score')));
+    setState(() {
+      isLoading = false;
+    });
+  }
+
+  @override
+  void initState() {
+    setState(() {
+      isLoading = true;
+    });
+    print('id: ${widget.pollId}');
+    loadData();
+    super.initState();
+  }
+
+  Future<void> submitDialog(bool error, String txt) async {
+    return showDialog<void>(
+      context: context,
+      barrierDismissible: false, // user must tap button!
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: Text('Submit Poll'),
+          content: Text(txt),
+          actions: <Widget>[
+            TextButton(
+              child: Text('Cancel'),
+              onPressed: () {
+                Navigator.of(context).pop();
+              },
+            ),
+            error
+                ? Container()
+                : TextButton(
+                    child: Text('Ok'),
+                    onPressed: uploadPoll,
+                  )
+          ],
+        );
+      },
+    );
+  }
+
+  void dispose() {
+    for (int i; i < pollItems.length; i++) pollItems[i].controller.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: isLoading
+          ? AppBar(
+              title: Text('Edit Poll'), backgroundColor: Colors.transparent)
+          : AppBar(
+              title: Text(pollName),
+              actions: [
+                IconButton(
+                  icon: const Icon(Icons.add),
+                  tooltip: 'add item',
+                  onPressed: () {
+                    setState(() {
+                      pollItems.add(new PollItem.TC());
+                    });
+                  },
+                ),
+              ],
+            ),
+      body: isLoading
+          ? Container(
+              child: Center(child: CircularProgressIndicator()),
+            )
+          : ListView.builder(
+              itemCount: pollItems.length,
+              itemBuilder: (context, index) {
+                return Dismissible(
+                  key: UniqueKey(),
+                  direction: DismissDirection.endToStart,
+                  onDismissed: (direction) {
+                    setState(() {
+                      pollItems.removeAt(index);
+                    });
+                  },
+                  background: Container(
+                    color: Colors.red,
+                    alignment: Alignment.centerRight,
+                    child: Icon(Icons.delete),
+                  ),
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Text(
+                        (index + 1).toString(),
+                        style: TextStyle(
+                          color: Colors.white,
+                          fontSize: 16,
+                        ),
+                      ),
+                      SizedBox(width: 20),
+                      Expanded(
+                        child: TextField(
+                          controller: pollItems[index].controller,
+                          onEditingComplete: () => {setState(() {})},
+                          style: simpleTextStyle(),
+                          decoration: InputDecoration(
+                              hintText: "add item name ...",
+                              hintStyle: TextStyle(
+                                color: Colors.white,
+                                fontSize: 16,
+                              ),
+                              border: InputBorder.none),
+                        ),
+                      ),
+                      Icon(
+                        Icons.text_fields,
+                        color: pollItems[index].controller.text != ''
                             ? Colors.green
-                            : Colors.black,
-                        onPressed: () => chooseFile(index),
+                            : Colors.red,
+                      ),
+                      SizedBox(width: 20),
+                      Container(
+                        height: 100,
+                        width: 100,
+                        child: !pollItems[index].hasMedia
+                            ? IconButton(
+                                icon: Icon(Icons.image),
+                                color: Colors.red,
+                                onPressed: () => chooseFile(index),
+                              )
+                            : Image.file(pollItems[index].image,
+                                fit: BoxFit.cover),
                       ),
                     ],
                   ),

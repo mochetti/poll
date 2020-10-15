@@ -6,6 +6,7 @@ import 'search.dart';
 import 'vote.dart';
 import '../services/database.dart';
 import '../models/poll.dart';
+import 'newPoll.dart';
 
 class Trending extends StatefulWidget {
   const Trending({Key key}) : super(key: key);
@@ -41,6 +42,54 @@ class _TrendingState extends State<Trending> {
     });
   }
 
+  Future<void> pollDialog(String name, String pollId) async {
+    return showDialog<void>(
+      context: context,
+      barrierDismissible: true,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: Text(name),
+          content: Container(
+            height: 100,
+            child: Column(
+              children: [
+                IconButton(
+                  icon: Icon(Icons.edit),
+                  onPressed: () => {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => EditPoll(
+                          pollId: pollId,
+                        ),
+                      ),
+                    )
+                  },
+                ),
+                Row(
+                  children: [
+                    RaisedButton(
+                      child: Text('Wpp'),
+                      onPressed: null,
+                    ),
+                  ],
+                )
+              ],
+            ),
+          ),
+          actions: <Widget>[
+            TextButton(
+              child: Text('Cancel'),
+              onPressed: () {
+                Navigator.of(context).pop();
+              },
+            ),
+          ],
+        );
+      },
+    );
+  }
+
   @override
   void initState() {
     setState(() {
@@ -72,49 +121,57 @@ class _TrendingState extends State<Trending> {
                 padding: const EdgeInsets.all(20),
                 itemCount: trendingPolls.length,
                 itemBuilder: (context, index) {
-                  return CupertinoButton(
-                    child: Container(
-                      height: 220,
-                      width: 220,
-                      decoration: BoxDecoration(
-                        color: Colors.yellowAccent,
-                        // image: DecorationImage(
-                        //   image: AssetImage("assets/mindful.jpg"),
-                        //   fit: BoxFit.cover,
-                        // ),
-                        borderRadius: BorderRadius.circular(12),
-                      ),
-                      child: Container(
-                        margin: EdgeInsets.fromLTRB(15, 15, 0, 0),
-                        child: Column(
-                          children: [
-                            Text(
-                              trendingPolls[index].name,
-                              style: TextStyle(
-                                  color: Colors.black,
-                                  fontSize: 20,
-                                  fontWeight: FontWeight.w600),
-                            ),
-                            Text(
-                              'by: ${trendingPolls[index].creator}',
-                              style: TextStyle(
-                                  color: Colors.black,
-                                  fontSize: 20,
-                                  fontWeight: FontWeight.w600),
-                            ),
-                          ],
-                        ),
-                      ),
+                  return Ink(
+                    decoration: BoxDecoration(
+                      color: Colors.yellowAccent,
+                      // image: DecorationImage(
+                      //   image: AssetImage("assets/mindful.jpg"),
+                      //   fit: BoxFit.cover,
+                      // ),
+                      borderRadius: BorderRadius.circular(12),
                     ),
-                    onPressed: () => {
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                          builder: (context) =>
-                              Vote(pollId: trendingPolls[index].id),
+                    child: InkWell(
+                      splashColor: Colors.blue,
+                      borderRadius: BorderRadius.circular(12),
+                      child: Container(
+                        height: 220,
+                        width: 220,
+                        child: Container(
+                          margin: EdgeInsets.fromLTRB(15, 15, 0, 0),
+                          child: Column(
+                            children: [
+                              Text(
+                                trendingPolls[index].name,
+                                style: TextStyle(
+                                    color: Colors.black,
+                                    fontSize: 20,
+                                    fontWeight: FontWeight.w600),
+                              ),
+                              Text(
+                                'by: ${trendingPolls[index].creator}',
+                                style: TextStyle(
+                                    color: Colors.black,
+                                    fontSize: 20,
+                                    fontWeight: FontWeight.w600),
+                              ),
+                            ],
+                          ),
                         ),
                       ),
-                    },
+                      onTap: () => {
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (context) =>
+                                Vote(pollId: trendingPolls[index].id),
+                          ),
+                        ),
+                      },
+                      onLongPress: () => {
+                        pollDialog(
+                            trendingPolls[index].name, trendingPolls[index].id)
+                      },
+                    ),
                   );
                 },
               ),
