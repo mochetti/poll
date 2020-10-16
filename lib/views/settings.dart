@@ -17,8 +17,15 @@ class _SettingState extends State<Setting> {
       body: Column(
         children: [
           SizedBox(height: 40),
-          Text('Olá, ${userQuery.docs[0].get('name')}',
-              style: TextStyle(color: Colors.white)),
+          userIsAnonymous
+              ? Text(
+                  'Hello, stranger',
+                  style: TextStyle(color: Colors.white),
+                )
+              : Text(
+                  'Hello, ${userQuery.docs[0].get('name')}',
+                  style: TextStyle(color: Colors.white),
+                ),
           RaisedButton(
             child: Text('Sign Out'),
             onPressed: () => AuthService().signOut(),

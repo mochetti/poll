@@ -7,6 +7,7 @@ import 'vote.dart';
 import '../services/database.dart';
 import '../models/poll.dart';
 import 'newPoll.dart';
+import 'package:cloud_functions/cloud_functions.dart';
 
 class Trending extends StatefulWidget {
   const Trending({Key key}) : super(key: key);
@@ -20,6 +21,7 @@ class _TrendingState extends State<Trending> {
   QuerySnapshot query;
   List<Poll> trendingPolls = [];
   bool isLoading = false;
+  FirebaseFunctions functions = FirebaseFunctions.instance;
 
   Future<void> loadData() async {
     await databaseMethods.getTrending().then((snapshot) {
@@ -50,7 +52,7 @@ class _TrendingState extends State<Trending> {
         return AlertDialog(
           title: Text(name),
           content: Container(
-            height: 100,
+            height: 150,
             child: Column(
               children: [
                 IconButton(
@@ -73,7 +75,7 @@ class _TrendingState extends State<Trending> {
                       onPressed: null,
                     ),
                   ],
-                )
+                ),
               ],
             ),
           ),

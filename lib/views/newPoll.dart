@@ -193,7 +193,7 @@ class _AddPollState extends State<AddPoll> {
     // add poll to polls
     Map<String, dynamic> pollData = {
       "name": widget.poll,
-      "creator": userQuery.docs[0].id,
+      "creator": userIsAnonymous ? 'Anonymous' : userQuery.docs[0].id,
       "pop": 0
     };
     DocumentSnapshot poll = databaseMethods.addPoll(pollData);
@@ -482,7 +482,7 @@ class _EditPollState extends State<EditPoll> {
     setState(() {
       isLoading = true;
     });
-    print('id: ${widget.pollId}');
+    print('edit poll: ${widget.pollId}');
     loadData();
     super.initState();
   }
@@ -600,7 +600,7 @@ class _EditPollState extends State<EditPoll> {
                                 color: Colors.red,
                                 onPressed: () => chooseFile(index),
                               )
-                            : Image.file(pollItems[index].image,
+                            : Image.network(pollItems[index].link,
                                 fit: BoxFit.cover),
                       ),
                     ],

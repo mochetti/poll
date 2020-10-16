@@ -32,7 +32,10 @@ class _MenuState extends State<Menu> {
   ];
 
   void loadData() async {
-    userQuery = await databaseMethods.getUserInfo(_auth.currentUser.email);
+    if (_auth.currentUser.email != null)
+      userQuery = await databaseMethods.getUserInfo(_auth.currentUser.email);
+    else
+      userIsAnonymous = true;
   }
 
   @override

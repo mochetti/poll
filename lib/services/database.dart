@@ -1,6 +1,8 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_core/firebase_core.dart';
 import '../models/user.dart';
 import '../models/poll.dart';
+import 'package:cloud_functions/cloud_functions.dart';
 
 class DatabaseMethods {
   Future<void> addUser(userData) async {
@@ -164,6 +166,17 @@ class DatabaseMethods {
           .catchError((e) {
         print(e.toString());
       });
+    }
+  }
+
+  deletePoll(String pollId) async {
+    try {
+      HttpsCallable callable =
+          FirebaseFunctions.instance.httpsCallable('recursiveDelete');
+      final results = await callable.call({'path': pollId});
+      return results.data;
+    } catch (e) {
+      print(e);
     }
   }
 

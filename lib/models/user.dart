@@ -6,3 +6,4 @@ class MyUser {
 }
 
 QuerySnapshot userQuery;
+bool userIsAnonymous = false;
