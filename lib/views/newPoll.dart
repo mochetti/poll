@@ -9,6 +9,7 @@ import 'package:image_picker/image_picker.dart';
 import 'package:firebase_storage/firebase_storage.dart';
 import 'package:path/path.dart' as Path;
 import '../models/poll.dart';
+import 'package:location/location.dart';
 
 class NewPoll extends StatefulWidget {
   const NewPoll({Key key}) : super(key: key);
@@ -142,6 +143,37 @@ class _AddPollState extends State<AddPoll> {
   String pollId;
   final picker = ImagePicker();
   bool isLoading = false;
+  double latitude = 0, longitude = 0;
+
+  void getLocation() async {
+    Location location = new Location();
+
+    bool _serviceEnabled;
+    PermissionStatus _permissionGranted;
+    LocationData _locationData;
+
+    _serviceEnabled = await location.serviceEnabled();
+    if (!_serviceEnabled) {
+      _serviceEnabled = await location.requestService();
+      if (!_serviceEnabled) {
+        return;
+      }
+    }
+
+    _permissionGranted = await location.hasPermission();
+    if (_permissionGranted == PermissionStatus.denied) {
+      _permissionGranted = await location.requestPermission();
+      if (_permissionGranted != PermissionStatus.granted) {
+        return;
+      }
+    }
+
+    _locationData = await location.getLocation();
+    latitude = _locationData.latitude;
+    longitude = _locationData.longitude;
+    setState(() {});
+    return;
+  }
 
   Future chooseFile(int index) async {
     final pickedFile = await picker.getImage(source: ImageSource.gallery);
@@ -193,22 +225,22 @@ class _AddPollState extends State<AddPoll> {
     // add poll to polls
     Map<String, dynamic> pollData = {
       "name": widget.poll,
-      "creator": userIsAnonymous ? 'Anonymous' : userQuery.docs[0].id,
-      "pop": 0
+      "creator": userIsAnonymous ? '' : userQuery.docs[0].id,
+      "pop": 0,
+      "lat": latitude,
+      "lon": longitude
     };
-    DocumentSnapshot poll = databaseMethods.addPoll(pollData);
-
-    // Get poll's id
-    // String pollId;
-    // await databaseMethods.getPollId(widget.poll).then((snapshot) {
-    //   pollId = snapshot.docs[0].id;
-    // });
+    print('queso');
+    DocumentReference poll = await databaseMethods.addPoll(pollData);
+    print('pimenta');
     pollId = poll.id;
+    print('antes');
     print('docId = $pollId');
+    print('depois');
 
     // add poll to utils
     Map<String, dynamic> utilsData = {"id": pollId, "qnt": pollItems.length};
-    databaseMethods.addUtils(utilsData);
+    await databaseMethods.addUtils(utilsData);
 
     // add each poll item
     for (int index = 0; index < pollItems.length; index++) {
@@ -222,15 +254,15 @@ class _AddPollState extends State<AddPoll> {
         "link": link,
         "score": 800
       };
-      // Add poll to polls
-      print('Adding poll to polls');
-      databaseMethods.addPollItem(pollId, itemData);
+      // Adding item
+      print('Adding item');
+      await databaseMethods.addPollItem(pollId, itemData);
     }
 
     // Add poll to user
     print('Adding poll to user');
     Map<String, String> pollUser = {"id": pollId};
-    databaseMethods.addUserPoll(pollUser);
+    await databaseMethods.addUserPoll(pollUser);
 
     Navigator.of(context).popUntil((route) => route.isFirst);
   }
@@ -238,6 +270,7 @@ class _AddPollState extends State<AddPoll> {
   @override
   void initState() {
     pollItems.add(new PollItem.TC());
+    getLocation();
     super.initState();
   }
 
@@ -260,7 +293,10 @@ class _AddPollState extends State<AddPoll> {
                 ? Container()
                 : TextButton(
                     child: Text('Ok'),
-                    onPressed: uploadPoll,
+                    onPressed: () => {
+                      uploadPoll(),
+                      Navigator.of(context).pop(),
+                    },
                   )
           ],
         );
@@ -380,6 +416,7 @@ class EditPoll extends StatefulWidget {
 class _EditPollState extends State<EditPoll> {
   DatabaseMethods databaseMethods = new DatabaseMethods();
   List<PollItem> pollItems = [];
+  List<PollItem> prevItems = [];
   String pollName = '';
   final picker = ImagePicker();
   bool isLoading = false;
@@ -434,6 +471,13 @@ class _EditPollState extends State<EditPoll> {
     // delete previous items
     await databaseMethods.deletePollItems(widget.pollId);
 
+    // compare which items have changed
+    // if (pollItems.length <= prevItems.length) {
+    //   for (int index = 0; index < pollItems.length; index++) {
+
+    //   }
+    // }
+
     // add each poll item
     for (int index = 0; index < pollItems.length; index++) {
       if (pollItems[index].image != null)
@@ -445,18 +489,13 @@ class _EditPollState extends State<EditPoll> {
         "link": pollItems[index].link,
         "score": pollItems[index].score,
       };
-      // Add poll to polls
-      print('Adding poll to polls');
+      // Adding item
+      print('Adding items');
       databaseMethods.addPollItem(widget.pollId, itemData);
     }
 
     // Update qnt in utils
     databaseMethods.setQnt(widget.pollId, pollItems.length);
-
-    // Add poll to user
-    print('Adding poll to user');
-    Map<String, String> pollUser = {"id": widget.pollId};
-    databaseMethods.addUserPoll(pollUser);
 
     Navigator.of(context).popUntil((route) => route.isFirst);
   }
@@ -467,14 +506,26 @@ class _EditPollState extends State<EditPoll> {
     pollName = pollSnap.get('name');
     // load pollItems with current poll's items
     QuerySnapshot poll = await databaseMethods.getPollItems(widget.pollId);
-    for (int i = 0; i < poll.docs.length; i++)
-      pollItems.add(PollItem(
+    for (int i = 0; i < poll.docs.length; i++) {
+      pollItems.add(
+        new PollItem(
           name: poll.docs[i].get('name'),
           link: poll.docs[i].get('link'),
-          score: poll.docs[i].get('score')));
+          score: poll.docs[i].get('score').toDouble(),
+        ),
+      );
+      prevItems.add(
+        new PollItem(
+          name: poll.docs[i].get('name'),
+          link: poll.docs[i].get('link'),
+          score: poll.docs[i].get('score').toDouble(),
+        ),
+      );
+    }
     setState(() {
       isLoading = false;
     });
+    print('data loaded!');
   }
 
   @override
@@ -592,17 +643,23 @@ class _EditPollState extends State<EditPoll> {
                       ),
                       SizedBox(width: 20),
                       Container(
-                        height: 100,
-                        width: 100,
-                        child: !pollItems[index].hasMedia
-                            ? IconButton(
-                                icon: Icon(Icons.image),
-                                color: Colors.red,
-                                onPressed: () => chooseFile(index),
-                              )
-                            : Image.network(pollItems[index].link,
-                                fit: BoxFit.cover),
-                      ),
+                          height: 100,
+                          width: 100,
+                          child: !pollItems[index].hasMedia
+                              ? IconButton(
+                                  icon: Icon(Icons.image),
+                                  color: Colors.red,
+                                  onPressed: () => chooseFile(index),
+                                )
+                              : Ink(
+                                  decoration: BoxDecoration(
+                                    image: DecorationImage(
+                                        image: NetworkImage(
+                                          pollItems[index].link,
+                                        ),
+                                        fit: BoxFit.cover),
+                                  ),
+                                )),
                     ],
                   ),
                 );

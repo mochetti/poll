@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:location/location.dart';
 
 import '../services/database.dart';
 import 'trending.dart';
@@ -31,16 +32,44 @@ class _MenuState extends State<Menu> {
     Setting(),
   ];
 
+  void checkLocationPermission() async {
+    Location location = new Location();
+
+    bool _serviceEnabled;
+    PermissionStatus _permissionGranted;
+
+    _serviceEnabled = await location.serviceEnabled();
+    if (!_serviceEnabled) {
+      _serviceEnabled = await location.requestService();
+      if (!_serviceEnabled) {
+        return;
+      }
+    }
+
+    _permissionGranted = await location.hasPermission();
+    if (_permissionGranted == PermissionStatus.denied) {
+      _permissionGranted = await location.requestPermission();
+      if (_permissionGranted != PermissionStatus.granted) {
+        return;
+      }
+    }
+  }
+
   void loadData() async {
-    if (_auth.currentUser.email != null)
-      userQuery = await databaseMethods.getUserInfo(_auth.currentUser.email);
-    else
+    if (_auth.currentUser.email != null) {
+      userQuery = await databaseMethods.getUserInfo(_auth.currentUser.uid);
+      print('user uid: ${_auth.currentUser.uid}');
+      print('user name: ${userQuery.docs[0].get('name')}');
+    } else {
       userIsAnonymous = true;
+      print('user is anonymous');
+    }
   }
 
   @override
   void initState() {
     loadData();
+    checkLocationPermission();
     super.initState();
   }
 

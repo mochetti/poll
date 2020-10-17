@@ -14,11 +14,11 @@ class DatabaseMethods {
     });
   }
 
-  // get info using email
-  getUserInfo(String email) async {
+  // get info using UID
+  getUserInfo(String uid) async {
     return FirebaseFirestore.instance
         .collection("users")
-        .where("email", isEqualTo: email)
+        .where("uid", isEqualTo: uid)
         .get()
         .catchError((e) {
       print(e.toString());
@@ -69,6 +69,29 @@ class DatabaseMethods {
         .doc(userQuery.docs[0].id)
         .collection('polls')
         .get()
+        .catchError((e) {
+      print(e.toString());
+    });
+  }
+
+  // Delete specific poll from users document
+  deletePollFromUser(String pollId) async {
+    // First get poll's doc id inside user doc
+    QuerySnapshot snap = await FirebaseFirestore.instance
+        .collection('users')
+        .doc(userQuery.docs[0].id)
+        .collection('polls')
+        .where('id', isEqualTo: pollId)
+        .get()
+        .catchError((e) {
+      print(e.toString());
+    });
+    return FirebaseFirestore.instance
+        .collection('users')
+        .doc(userQuery.docs[0].id)
+        .collection('polls')
+        .doc(snap.docs[0].id)
+        .delete()
         .catchError((e) {
       print(e.toString());
     });
@@ -169,6 +192,7 @@ class DatabaseMethods {
     }
   }
 
+  // Calls cloud function to iterate over and delete every doc in poll using id
   deletePoll(String pollId) async {
     try {
       HttpsCallable callable =

@@ -46,14 +46,14 @@ class _SearchState extends State<Search> {
             itemBuilder: (context, index) {
               return pollCard(
                 searchResultSnapshot.docs[index].get("name"),
-                searchResultSnapshot.docs[index].get("createdBy"),
+                searchResultSnapshot.docs[index].get("creator"),
                 searchResultSnapshot.docs[index].id,
               );
             })
         : Container();
   }
 
-  Widget pollCard(String name, String createdBy, String pollId) {
+  Widget pollCard(String name, String creator, String pollId) {
     return CupertinoButton(
       child: Container(
         height: 100,
@@ -78,7 +78,7 @@ class _SearchState extends State<Search> {
                       fontWeight: FontWeight.w600),
                 ),
                 Text(
-                  'by: $createdBy',
+                  'by: $creator',
                   style: TextStyle(
                       color: Colors.black,
                       fontSize: 20,

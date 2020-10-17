@@ -11,8 +11,9 @@ class Poll {
     creator = c;
     id = i;
   }
-  Poll.name(String n) {
+  Poll.nameAndID(String n, String i) {
     name = n;
+    id = i;
   }
 }
 
@@ -21,15 +22,17 @@ class PollItem {
   TextEditingController controller;
   String name = '';
   double score = 0;
-  String id = '';
+  int id = 0;
+  String docId = '';
   String link = '';
   bool hasMedia = false;
 
-  PollItem({String name, double score, String id, String link}) {
+  PollItem({String name, double score, String docId, String link, int id}) {
     this.name = name;
     this.score = score;
-    this.id = id;
+    this.docId = docId;
     this.link = link;
+    this.id = id;
     this.controller = new TextEditingController(text: name);
     if (link != '') this.hasMedia = true;
   }

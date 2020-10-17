@@ -32,7 +32,7 @@ class _ProfileState extends State<Profile> {
       await databaseMethods.getPoll(query.docs[index].get('id')).then(
         (snapshot) {
           DocumentSnapshot q = snapshot;
-          myPolls.add(new Poll.name(q.get('name')));
+          myPolls.add(new Poll.nameAndID(q.get('name'), q.id));
         },
       );
     }
@@ -52,6 +52,46 @@ class _ProfileState extends State<Profile> {
 
   void dispose() {
     super.dispose();
+  }
+
+  Future<void> deleteDialog(String pollId) async {
+    return showDialog<void>(
+      context: context,
+      barrierDismissible: true,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: Text('Delete Poll'),
+          content: Container(
+            height: 150,
+            child: Column(
+              children: [
+                Text('Are you sure? \nThis cannot be undone'),
+              ],
+            ),
+          ),
+          actions: <Widget>[
+            TextButton(
+              child: Text('Cancel'),
+              onPressed: () {
+                Navigator.of(context).pop();
+              },
+            ),
+            TextButton(
+              child: Text('Yes'),
+              onPressed: () async {
+                await databaseMethods.deletePoll(pollId);
+                await databaseMethods.deletePollFromUser(pollId);
+                Navigator.of(context).popUntil((route) => route.isFirst);
+                setState(() {
+                  isLoading = true;
+                });
+                loadData();
+              },
+            )
+          ],
+        );
+      },
+    );
   }
 
   Future<void> pollDialog(String name, String pollId) async {
@@ -89,7 +129,7 @@ class _ProfileState extends State<Profile> {
                 IconButton(
                   icon: Icon(Icons.delete),
                   onPressed: () async {
-                    databaseMethods.deletePoll(pollId);
+                    deleteDialog(pollId);
                   },
                 ),
               ],
@@ -138,35 +178,37 @@ class _ProfileState extends State<Profile> {
               ? Container(
                   child: Center(child: CircularProgressIndicator()),
                 )
-              : RefreshIndicator(
-                  onRefresh: loadData,
-                  child: GridView.builder(
-                    gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-                      crossAxisCount: 2,
-                      mainAxisSpacing: 10,
-                      crossAxisSpacing: 10,
-                    ),
-                    physics: const BouncingScrollPhysics(
-                        parent: AlwaysScrollableScrollPhysics()),
-                    primary: false,
-                    padding: const EdgeInsets.all(20),
-                    itemCount: myPolls.length,
-                    itemBuilder: (context, index) {
-                      return Ink(
-                        decoration: BoxDecoration(
-                          color: Colors.yellowAccent,
-                          // image: DecorationImage(
-                          //   image: AssetImage("assets/mindful.jpg"),
-                          //   fit: BoxFit.cover,
-                          // ),
-                          borderRadius: BorderRadius.circular(12),
-                        ),
-                        child: InkWell(
-                          splashColor: Colors.blue,
-                          borderRadius: BorderRadius.circular(12),
+              : myPolls.length == 0
+                  ? RefreshIndicator(
+                      onRefresh: loadData,
+                      child: SingleChildScrollView(
+                        physics: AlwaysScrollableScrollPhysics(),
+                        child: Center(
                           child: Container(
-                            height: 200,
-                            width: 200,
+                            child: Text(
+                              'You do not have any polls yet! \nClick above to add one!',
+                              style: TextStyle(color: Colors.white),
+                            ),
+                            height: MediaQuery.of(context).size.height,
+                          ),
+                        ),
+                      ),
+                    )
+                  : RefreshIndicator(
+                      onRefresh: loadData,
+                      child: GridView.builder(
+                        gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+                          crossAxisCount: 2,
+                          mainAxisSpacing: 10,
+                          crossAxisSpacing: 10,
+                        ),
+                        physics: const BouncingScrollPhysics(
+                            parent: AlwaysScrollableScrollPhysics()),
+                        primary: false,
+                        padding: const EdgeInsets.all(20),
+                        itemCount: myPolls.length,
+                        itemBuilder: (context, index) {
+                          return Ink(
                             decoration: BoxDecoration(
                               color: Colors.yellowAccent,
                               // image: DecorationImage(
@@ -175,34 +217,49 @@ class _ProfileState extends State<Profile> {
                               // ),
                               borderRadius: BorderRadius.circular(12),
                             ),
-                            child: Container(
-                              margin: EdgeInsets.fromLTRB(15, 15, 0, 0),
-                              child: Text(
-                                myPolls[index].name,
-                                style: TextStyle(
-                                    color: Colors.black,
-                                    fontSize: 20,
-                                    fontWeight: FontWeight.w600),
+                            child: InkWell(
+                              splashColor: Colors.blue,
+                              borderRadius: BorderRadius.circular(12),
+                              child: Container(
+                                height: 200,
+                                width: 200,
+                                decoration: BoxDecoration(
+                                  color: Colors.yellowAccent,
+                                  // image: DecorationImage(
+                                  //   image: AssetImage("assets/mindful.jpg"),
+                                  //   fit: BoxFit.cover,
+                                  // ),
+                                  borderRadius: BorderRadius.circular(12),
+                                ),
+                                child: Container(
+                                  margin: EdgeInsets.fromLTRB(15, 15, 0, 0),
+                                  child: Text(
+                                    myPolls[index].name,
+                                    style: TextStyle(
+                                        color: Colors.black,
+                                        fontSize: 20,
+                                        fontWeight: FontWeight.w600),
+                                  ),
+                                ),
                               ),
+                              onTap: () => {
+                                Navigator.push(
+                                  context,
+                                  MaterialPageRoute(
+                                    builder: (context) => Vote(
+                                        pollId: query.docs[index].get('id')),
+                                  ),
+                                ),
+                              },
+                              onLongPress: () => {
+                                pollDialog(
+                                    myPolls[index].name, myPolls[index].id)
+                              },
                             ),
-                          ),
-                          onTap: () => {
-                            Navigator.push(
-                              context,
-                              MaterialPageRoute(
-                                builder: (context) =>
-                                    Vote(pollId: query.docs[index].get('id')),
-                              ),
-                            ),
-                          },
-                          onLongPress: () => {
-                            pollDialog(myPolls[index].name, myPolls[index].id)
-                          },
-                        ),
-                      );
-                    },
-                  ),
-                ),
+                          );
+                        },
+                      ),
+                    ),
     );
   }
 }

@@ -38,6 +38,10 @@
 	<string>We need to access your camera!</string>
 	<key>NSMicrophoneUsageDescription</key>
 	<string>We need to access your mic!</string>
+	<key>NSLocationWhenInUseUsageDescription</key>
+	<string>We need your location!</string>
+	<key>NSLocationAlwaysUsageDescription</key>
+	<string>We need your location!</string>
 	<key>CFBundleDevelopmentRegion</key>
 	<string>$(DEVELOPMENT_LANGUAGE)</string>
 	<key>CFBundleExecutable</key>

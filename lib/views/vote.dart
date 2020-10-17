@@ -118,14 +118,14 @@ class _VoteState extends State<Vote> {
       a = await databaseMethods.getDoc(widget.pollId, idA);
       itemA.name = a.docs[0].get('name');
       itemA.score = a.docs[0].get('score').toDouble();
-      itemA.id = a.docs[0].id;
+      itemA.docId = a.docs[0].id;
       itemA.link = a.docs[0].get('link');
 
       PollItem itemB = new PollItem();
       b = await databaseMethods.getDoc(widget.pollId, idB);
       itemB.name = b.docs[0].get('name');
       itemB.score = b.docs[0].get('score').toDouble();
-      itemB.id = b.docs[0].id;
+      itemB.docId = b.docs[0].id;
       itemB.link = b.docs[0].get('link');
 
       items.value.add(itemA);
@@ -164,9 +164,9 @@ class _VoteState extends State<Vote> {
 
     // Update scores online
     await databaseMethods.setScore(
-        widget.pollId, items.value[0].id, items.value[0].score);
+        widget.pollId, items.value[0].docId, items.value[0].score);
     await databaseMethods.setScore(
-        widget.pollId, items.value[1].id, items.value[1].score);
+        widget.pollId, items.value[1].docId, items.value[1].score);
 
     // Refresh
     getData();

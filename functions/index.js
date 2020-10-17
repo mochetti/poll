@@ -22,7 +22,7 @@ exports.recursiveDelete = functions
     if (!(context.auth)) {
       throw new functions.https.HttpsError(
         'permission-denied',
-        'Must be an administrative user to initiate delete.'
+        'Permission denied'
       );
     }
     
