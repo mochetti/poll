@@ -98,83 +98,90 @@ class _TrendingState extends State<Trending> {
             )
           : RefreshIndicator(
               onRefresh: loadData,
-              child: ListView(
-                shrinkWrap: true,
-                children: [
-                  Container(
-                    height: 200,
-                    width: MediaQuery.of(context).size.width,
-                    child: ListView.builder(
-                      physics: const BouncingScrollPhysics(
-                          parent: AlwaysScrollableScrollPhysics()),
-                      primary: true,
-                      scrollDirection: Axis.horizontal,
-                      padding: const EdgeInsets.all(20),
-                      itemCount: trendingPolls.length,
-                      itemBuilder: (context, index) {
-                        return Container(
-                          height: 100,
-                          width: 100,
-                          child: Ink(
-                            decoration: BoxDecoration(
-                              color: Colors.yellowAccent,
-                              // image: DecorationImage(
-                              //   image: AssetImage("assets/mindful.jpg"),
-                              //   fit: BoxFit.cover,
-                              // ),
-                              borderRadius: BorderRadius.circular(12),
-                            ),
-                            child: InkWell(
-                              splashColor: Colors.blue,
-                              borderRadius: BorderRadius.circular(12),
-                              child: Container(
-                                // height: 100,
-                                // width: 100,
-                                child: Container(
-                                  margin: EdgeInsets.fromLTRB(15, 15, 0, 0),
-                                  child: Column(
-                                    children: [
-                                      Text(
-                                        trendingPolls[index].name,
-                                        style: TextStyle(
-                                            color: Colors.black,
-                                            fontSize: 20,
-                                            fontWeight: FontWeight.w600),
+              child: ListView.builder(
+                physics: AlwaysScrollableScrollPhysics(),
+                itemCount: 2,
+                itemBuilder: (context, ind) {
+                  return Column(
+                    children: [
+                      Text(
+                        'Coleção $ind',
+                        style: TextStyle(color: Colors.white),
+                      ),
+                      Container(
+                        height: 150,
+                        width: MediaQuery.of(context).size.width,
+                        child: ListView.builder(
+                          shrinkWrap: true,
+                          physics: AlwaysScrollableScrollPhysics(),
+                          primary: true,
+                          scrollDirection: Axis.horizontal,
+                          padding: const EdgeInsets.all(20),
+                          itemCount: trendingPolls.length,
+                          itemBuilder: (context, index) {
+                            return Container(
+                              padding: const EdgeInsets.all(10),
+                              width: 150,
+                              child: Ink(
+                                decoration: BoxDecoration(
+                                  color: Colors.yellowAccent,
+                                  // image: DecorationImage(
+                                  //   image: AssetImage("assets/mindful.jpg"),
+                                  //   fit: BoxFit.cover,
+                                  // ),
+                                  borderRadius: BorderRadius.circular(12),
+                                ),
+                                child: InkWell(
+                                  splashColor: Colors.blue,
+                                  borderRadius: BorderRadius.circular(12),
+                                  child: Container(
+                                    height: 50,
+                                    // width: 100,
+                                    child: Container(
+                                      margin: EdgeInsets.fromLTRB(15, 15, 0, 0),
+                                      child: Column(
+                                        children: [
+                                          Text(
+                                            trendingPolls[index].name,
+                                            style: TextStyle(
+                                                color: Colors.black,
+                                                fontSize: 20,
+                                                fontWeight: FontWeight.w600),
+                                          ),
+                                          Text(
+                                            'by: ${trendingPolls[index].creator}',
+                                            style: TextStyle(
+                                                color: Colors.black,
+                                                fontSize: 20,
+                                                fontWeight: FontWeight.w600),
+                                          ),
+                                        ],
                                       ),
-                                      Text(
-                                        'by: ${trendingPolls[index].creator}',
-                                        style: TextStyle(
-                                            color: Colors.black,
-                                            fontSize: 20,
-                                            fontWeight: FontWeight.w600),
-                                      ),
-                                    ],
+                                    ),
                                   ),
+                                  onTap: () => {
+                                    Navigator.push(
+                                      context,
+                                      MaterialPageRoute(
+                                        builder: (context) => Vote(
+                                            pollId: trendingPolls[index].id),
+                                      ),
+                                    ),
+                                  },
+                                  onLongPress: () => {
+                                    pollDialog(trendingPolls[index].name,
+                                        trendingPolls[index].id)
+                                  },
                                 ),
                               ),
-                              onTap: () => {
-                                Navigator.push(
-                                  context,
-                                  MaterialPageRoute(
-                                    builder: (context) =>
-                                        Vote(pollId: trendingPolls[index].id),
-                                  ),
-                                ),
-                              },
-                              onLongPress: () => {
-                                pollDialog(trendingPolls[index].name,
-                                    trendingPolls[index].id)
-                              },
-                            ),
-                          ),
-                        );
-                      },
-                    ),
-                  ),
-                  // Container(height: 100, child: Text('oi')),
-                ],
-              ),
-            ),
+                            );
+                          },
+                        ),
+                      ),
+                    ],
+                  );
+                },
+              )),
       floatingActionButton: FloatingActionButton(
         child: Icon(Icons.search),
         onPressed: () {

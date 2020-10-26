@@ -643,23 +643,27 @@ class _EditPollState extends State<EditPoll> {
                       ),
                       SizedBox(width: 20),
                       Container(
-                          height: 100,
-                          width: 100,
-                          child: !pollItems[index].hasMedia
-                              ? IconButton(
-                                  icon: Icon(Icons.image),
-                                  color: Colors.red,
-                                  onPressed: () => chooseFile(index),
-                                )
-                              : Ink(
-                                  decoration: BoxDecoration(
-                                    image: DecorationImage(
-                                        image: NetworkImage(
-                                          pollItems[index].link,
-                                        ),
-                                        fit: BoxFit.cover),
-                                  ),
-                                )),
+                        height: 100,
+                        width: 100,
+                        child: !pollItems[index].hasMedia
+                            ? IconButton(
+                                icon: Icon(Icons.image),
+                                color: Colors.red,
+                                onPressed: () => chooseFile(index),
+                              )
+                            : Ink(
+                                decoration: BoxDecoration(
+                                  image: DecorationImage(
+                                      image: NetworkImage(
+                                        pollItems[index].link,
+                                      ),
+                                      fit: BoxFit.cover),
+                                ),
+                                child: InkWell(
+                                  onTap: () => chooseFile(index),
+                                ),
+                              ),
+                      ),
                     ],
                   ),
                 );

@@ -68,6 +68,7 @@ class DatabaseMethods {
         .collection('users')
         .doc(userQuery.docs[0].id)
         .collection('polls')
+        // .where('active', isEqualTo: true)
         .get()
         .catchError((e) {
       print(e.toString());
