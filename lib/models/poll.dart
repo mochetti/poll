@@ -3,13 +3,14 @@ import 'package:flutter/material.dart';
 
 class Poll {
   String name;
+  String nameFormatted;
   String creator;
   String first;
   String id;
-  Poll(String n, String c, String i) {
-    name = n;
-    creator = c;
-    id = i;
+  Poll({String name, String creator, String id}) {
+    this.name = name;
+    this.creator = creator;
+    this.id = id;
   }
   Poll.nameAndID(String n, String i) {
     name = n;

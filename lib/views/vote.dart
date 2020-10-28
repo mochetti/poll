@@ -115,18 +115,20 @@ class _VoteState extends State<Vote> {
 
       // Get two docs
       PollItem itemA = new PollItem();
-      a = await databaseMethods.getDoc(widget.pollId, idA);
+      a = await databaseMethods.getItem(widget.pollId, idA);
       itemA.name = a.docs[0].get('name');
       itemA.score = a.docs[0].get('score').toDouble();
       itemA.docId = a.docs[0].id;
       itemA.link = a.docs[0].get('link');
+      itemA.id = a.docs[0].get('id');
 
       PollItem itemB = new PollItem();
-      b = await databaseMethods.getDoc(widget.pollId, idB);
+      b = await databaseMethods.getItem(widget.pollId, idB);
       itemB.name = b.docs[0].get('name');
       itemB.score = b.docs[0].get('score').toDouble();
       itemB.docId = b.docs[0].id;
       itemB.link = b.docs[0].get('link');
+      itemB.id = b.docs[0].get('id');
 
       items.value.add(itemA);
       items.value.add(itemB);
@@ -152,6 +154,11 @@ class _VoteState extends State<Vote> {
       items.value[1].score = items.value[1].score + k * (1 - pB);
     }
 
+    // print(items.value[0].id);
+    // print(items.value[0].score);
+    // print(items.value[1].id);
+    // print(items.value[1].score);
+
     // Update scores locally
     for (int i = 0; i < items.value.length; i++) {
       if (items.value[i].id == items.value[0].id)
@@ -161,6 +168,9 @@ class _VoteState extends State<Vote> {
       if (items.value[i].id == items.value[1].id)
         items.value[i].score = items.value[1].score;
     }
+
+    // print(items.value[0].score);
+    // print(items.value[1].score);
 
     // Update scores online
     await databaseMethods.setScore(

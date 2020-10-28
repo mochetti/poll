@@ -28,11 +28,11 @@ class _ProfileState extends State<Profile> {
     });
     myPolls = [];
     for (int index = 0; index < query.docs.length; index++) {
-      // print(query.docs[index].get('id'));
       await databaseMethods.getPoll(query.docs[index].get('id')).then(
         (snapshot) {
           DocumentSnapshot q = snapshot;
-          myPolls.add(new Poll.nameAndID(q.get('name'), q.id));
+          if (q.get('active'))
+            myPolls.add(new Poll.nameAndID(q.get('name'), q.id));
         },
       );
     }
@@ -80,7 +80,6 @@ class _ProfileState extends State<Profile> {
               child: Text('Yes'),
               onPressed: () async {
                 await databaseMethods.deletePoll(pollId);
-                await databaseMethods.deletePollFromUser(pollId);
                 Navigator.of(context).popUntil((route) => route.isFirst);
                 setState(() {
                   isLoading = true;

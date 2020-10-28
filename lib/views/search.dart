@@ -1,10 +1,11 @@
-import '../helper/constants.dart';
-import '../models/user.dart';
+// import '../helper/constants.dart';
+// import '../models/user.dart';
 import '../services/database.dart';
 import '../widget/widget.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/cupertino.dart';
+import "package:unorm_dart/unorm_dart.dart" as unorm;
 import 'vote.dart';
 
 class Search extends StatefulWidget {
@@ -25,9 +26,11 @@ class _SearchState extends State<Search> {
       setState(() {
         isLoading = true;
       });
-      await databaseMethods
-          .searchByPollName(searchEditingController.text)
-          .then((snapshot) {
+      // Check formatting
+      var combining = RegExp(r"[\u0300-\u036F]/g");
+      String textFormatted =
+          unorm.nfkd(searchEditingController.text).replaceAll(combining, "");
+      await databaseMethods.searchByPollName(textFormatted).then((snapshot) {
         searchResultSnapshot = snapshot;
         print("$searchResultSnapshot");
         setState(() {

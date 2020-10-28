@@ -10,6 +10,7 @@ import 'package:firebase_storage/firebase_storage.dart';
 import 'package:path/path.dart' as Path;
 import '../models/poll.dart';
 import 'package:location/location.dart';
+import "package:unorm_dart/unorm_dart.dart" as unorm;
 
 class NewPoll extends StatefulWidget {
   const NewPoll({Key key}) : super(key: key);
@@ -22,13 +23,19 @@ class _NewPollState extends State<NewPoll> {
   DatabaseMethods databaseMethods = new DatabaseMethods();
   TextEditingController newPollTC;
   String dropdownValue = 'None';
+  String textFormatted = '';
 
   createPoll() async {
     if (newPollTC.text.isNotEmpty) {
-      // Get poll's id
-      await databaseMethods.getPollId(newPollTC.text).then((snapshot) {
+      // Check formatting
+      var combining = RegExp(r"[\u0300-\u036F]/g");
+      textFormatted = unorm.nfkd(newPollTC.text).replaceAll(combining, "");
+
+      // Check if already exists
+      if (!await databaseMethods.checkPollName(textFormatted))
         newPollDialog('Do you want to create ${newPollTC.text}?', false);
-      });
+      else
+        newPollDialog('Name taken!', true);
 
       setState(() {
         // isLoading = true;
@@ -61,7 +68,9 @@ class _NewPollState extends State<NewPoll> {
                       Navigator.push(
                         context,
                         MaterialPageRoute(
-                          builder: (context) => AddPoll(poll: newPollTC.text),
+                          builder: (context) => AddPoll(
+                              name: newPollTC.text,
+                              nameFormatted: textFormatted),
                         ),
                       )
                     },
@@ -129,9 +138,10 @@ class _NewPollState extends State<NewPoll> {
 }
 
 class AddPoll extends StatefulWidget {
-  const AddPoll({Key key, this.poll}) : super(key: key);
+  const AddPoll({Key key, this.name, this.nameFormatted}) : super(key: key);
 
-  final String poll;
+  final String name;
+  final String nameFormatted;
 
   @override
   _AddPollState createState() => _AddPollState();
@@ -222,21 +232,21 @@ class _AddPollState extends State<AddPoll> {
     setState(() {
       isLoading = true;
     });
-    // add poll to polls
+
+    // create poll data
     Map<String, dynamic> pollData = {
-      "name": widget.poll,
+      "name": widget.name,
+      "nameFormatted": widget.nameFormatted,
       "creator": userIsAnonymous ? '' : userQuery.docs[0].id,
       "pop": 0,
       "lat": latitude,
-      "lon": longitude
+      "lon": longitude,
+      "active": true,
     };
-    print('queso');
+
     DocumentReference poll = await databaseMethods.addPoll(pollData);
-    print('pimenta');
     pollId = poll.id;
-    print('antes');
     print('docId = $pollId');
-    print('depois');
 
     // add poll to utils
     Map<String, dynamic> utilsData = {"id": pollId, "qnt": pollItems.length};
@@ -313,7 +323,7 @@ class _AddPollState extends State<AddPoll> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text(widget.poll),
+        title: Text(widget.name),
         actions: [
           IconButton(
             icon: const Icon(Icons.add),

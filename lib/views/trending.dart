@@ -6,7 +6,8 @@ import 'search.dart';
 import 'vote.dart';
 import '../services/database.dart';
 import '../models/poll.dart';
-import 'newPoll.dart';
+// import 'newPoll.dart';
+import '../models/category.dart';
 import 'package:cloud_functions/cloud_functions.dart';
 
 class Trending extends StatefulWidget {
@@ -19,26 +20,61 @@ class Trending extends StatefulWidget {
 class _TrendingState extends State<Trending> {
   DatabaseMethods databaseMethods = new DatabaseMethods();
   QuerySnapshot query;
-  List<Poll> trendingPolls = [];
+  List<Category> categories = [];
   bool isLoading = false;
   FirebaseFunctions functions = FirebaseFunctions.instance;
 
-  Future<void> loadData() async {
-    await databaseMethods.getTrending().then((snapshot) {
-      query = snapshot;
-    });
-    trendingPolls = [];
+  Future<void> loadCategories() async {
+    QuerySnapshot query = await databaseMethods.getCategories();
+    categories = [];
     for (int index = 0; index < query.docs.length; index++) {
-      DocumentSnapshot creatorDoc;
-      String creator = 'anonymous';
-      if (query.docs[index].get('creator') != 'anonymous') {
-        creatorDoc =
-            await databaseMethods.getUser(query.docs[index].get('creator'));
-        creator = creatorDoc.get('name');
+      categories.add(new Category(
+          name: query.docs[index].get('name'), id: query.docs[index].id));
+      // load polls id
+      QuerySnapshot snap =
+          await databaseMethods.getCatPolls(query.docs[index].id);
+      for (int i = 0; i < snap.docs.length; i++) {
+        categories[index].addPoll(snap.docs[i].get('id'));
       }
-      trendingPolls.add(new Poll(
-          query.docs[index].get('name'), creator, query.docs[index].id));
+      loadData();
     }
+  }
+
+  Future<void> loadData() async {
+    for (int index = 0; index < categories.length; index++) {
+      // Load polls
+      for (int i = 0; i < categories[index].polls.length; i++) {
+        DocumentSnapshot snap =
+            await databaseMethods.getPoll(categories[index].polls[i].id);
+        categories[index].polls[i].name = snap.get('name');
+        DocumentSnapshot creatorDoc;
+        String creator = 'anonymous';
+        if (snap.get('creator') != 'anonymous') {
+          creatorDoc = await databaseMethods.getUser(snap.get('creator'));
+          creator = creatorDoc.get('name');
+        }
+        categories[index].polls[i].creator = creator;
+      }
+    }
+
+    // await databaseMethods.getTrending().then((snapshot) {
+    //   query = snapshot;
+    // });
+    // trendingPolls = [];
+    // for (int index = 0; index < query.docs.length; index++) {
+    //   DocumentSnapshot creatorDoc;
+    //   String creator = 'anonymous';
+    //   if (query.docs[index].get('creator') != 'anonymous') {
+    //     creatorDoc =
+    //         await databaseMethods.getUser(query.docs[index].get('creator'));
+    //     creator = creatorDoc.get('name');
+    //   }
+    //   trendingPolls.add(new Poll(
+    //       name: query.docs[index].get('name'),
+    //       creator: creator,
+    //       id: query.docs[index].id));
+    // }
+
     setState(() {
       isLoading = false;
     });
@@ -85,7 +121,7 @@ class _TrendingState extends State<Trending> {
       isLoading = true;
     });
     // FocusScope.of(context).unfocus();
-    loadData();
+    loadCategories();
     super.initState();
   }
 
@@ -97,15 +133,15 @@ class _TrendingState extends State<Trending> {
               child: Center(child: CircularProgressIndicator()),
             )
           : RefreshIndicator(
-              onRefresh: loadData,
+              onRefresh: loadCategories,
               child: ListView.builder(
                 physics: AlwaysScrollableScrollPhysics(),
-                itemCount: 2,
+                itemCount: categories.length,
                 itemBuilder: (context, ind) {
                   return Column(
                     children: [
                       Text(
-                        'Coleção $ind',
+                        categories[ind].name,
                         style: TextStyle(color: Colors.white),
                       ),
                       Container(
@@ -117,7 +153,7 @@ class _TrendingState extends State<Trending> {
                           primary: true,
                           scrollDirection: Axis.horizontal,
                           padding: const EdgeInsets.all(20),
-                          itemCount: trendingPolls.length,
+                          itemCount: categories[ind].polls.length,
                           itemBuilder: (context, index) {
                             return Container(
                               padding: const EdgeInsets.all(10),
@@ -142,14 +178,14 @@ class _TrendingState extends State<Trending> {
                                       child: Column(
                                         children: [
                                           Text(
-                                            trendingPolls[index].name,
+                                            categories[ind].polls[index].name,
                                             style: TextStyle(
                                                 color: Colors.black,
                                                 fontSize: 20,
                                                 fontWeight: FontWeight.w600),
                                           ),
                                           Text(
-                                            'by: ${trendingPolls[index].creator}',
+                                            'by: ${categories[ind].polls[index].creator}',
                                             style: TextStyle(
                                                 color: Colors.black,
                                                 fontSize: 20,
@@ -164,13 +200,16 @@ class _TrendingState extends State<Trending> {
                                       context,
                                       MaterialPageRoute(
                                         builder: (context) => Vote(
-                                            pollId: trendingPolls[index].id),
+                                            pollId: categories[ind]
+                                                .polls[index]
+                                                .id),
                                       ),
                                     ),
                                   },
                                   onLongPress: () => {
-                                    pollDialog(trendingPolls[index].name,
-                                        trendingPolls[index].id)
+                                    pollDialog(
+                                        categories[ind].polls[index].name,
+                                        categories[ind].polls[index].id)
                                   },
                                 ),
                               ),
