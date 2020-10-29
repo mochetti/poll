@@ -1,4 +1,5 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 
 import '../helper/helperfunctions.dart';
 import '../helper/theme.dart';
@@ -20,6 +21,7 @@ class _SignUpState extends State<SignUp> {
   TextEditingController emailEditingController = new TextEditingController();
   TextEditingController passwordEditingController = new TextEditingController();
   TextEditingController usernameEditingController = new TextEditingController();
+  FirebaseAuth _auth = FirebaseAuth.instance;
 
   AuthService authService = new AuthService();
   DatabaseMethods databaseMethods = new DatabaseMethods();
@@ -43,6 +45,7 @@ class _SignUpState extends State<SignUp> {
           });
         } else {
           Map<String, String> userDataMap = {
+            "uid": _auth.currentUser.uid,
             "name": usernameEditingController.text,
             "email": emailEditingController.text
           };
