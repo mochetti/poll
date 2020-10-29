@@ -10,7 +10,8 @@ import 'package:firebase_storage/firebase_storage.dart';
 import 'package:path/path.dart' as Path;
 import '../models/poll.dart';
 import 'package:location/location.dart';
-import "package:unorm_dart/unorm_dart.dart" as unorm;
+import 'package:diacritic/diacritic.dart';
+import 'package:geoflutterfire/geoflutterfire.dart';
 
 class NewPoll extends StatefulWidget {
   const NewPoll({Key key}) : super(key: key);
@@ -28,9 +29,7 @@ class _NewPollState extends State<NewPoll> {
   createPoll() async {
     if (newPollTC.text.isNotEmpty) {
       // Check formatting
-      var combining = RegExp(r"[\u0300-\u036F]/g");
-      textFormatted = unorm.nfkd(newPollTC.text).replaceAll(combining, "");
-
+      textFormatted = removeDiacritics(newPollTC.text);
       // Check if already exists
       if (!await databaseMethods.checkPollName(textFormatted))
         newPollDialog('Do you want to create ${newPollTC.text}?', false);
@@ -153,7 +152,8 @@ class _AddPollState extends State<AddPoll> {
   String pollId;
   final picker = ImagePicker();
   bool isLoading = false;
-  double latitude = 0, longitude = 0;
+  final geo = Geoflutterfire();
+  GeoFirePoint geoPoint;
 
   void getLocation() async {
     Location location = new Location();
@@ -179,8 +179,9 @@ class _AddPollState extends State<AddPoll> {
     }
 
     _locationData = await location.getLocation();
-    latitude = _locationData.latitude;
-    longitude = _locationData.longitude;
+    geoPoint = geo.point(
+        latitude: _locationData.latitude, longitude: _locationData.longitude);
+
     setState(() {});
     return;
   }
@@ -239,8 +240,7 @@ class _AddPollState extends State<AddPoll> {
       "nameFormatted": widget.nameFormatted,
       "creator": userIsAnonymous ? '' : userQuery.docs[0].id,
       "pop": 0,
-      "lat": latitude,
-      "lon": longitude,
+      "geoPoint": geoPoint.data,
       "active": true,
     };
 
@@ -270,9 +270,11 @@ class _AddPollState extends State<AddPoll> {
     }
 
     // Add poll to user
-    print('Adding poll to user');
-    Map<String, String> pollUser = {"id": pollId};
-    await databaseMethods.addUserPoll(pollUser);
+    if (!userIsAnonymous) {
+      print('Adding poll to user');
+      Map<String, String> pollUser = {"id": pollId};
+      await databaseMethods.addUserPoll(pollUser);
+    }
 
     Navigator.of(context).popUntil((route) => route.isFirst);
   }

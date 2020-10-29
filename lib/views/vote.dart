@@ -154,11 +154,6 @@ class _VoteState extends State<Vote> {
       items.value[1].score = items.value[1].score + k * (1 - pB);
     }
 
-    // print(items.value[0].id);
-    // print(items.value[0].score);
-    // print(items.value[1].id);
-    // print(items.value[1].score);
-
     // Update scores locally
     for (int i = 0; i < items.value.length; i++) {
       if (items.value[i].id == items.value[0].id)
@@ -168,9 +163,6 @@ class _VoteState extends State<Vote> {
       if (items.value[i].id == items.value[1].id)
         items.value[i].score = items.value[1].score;
     }
-
-    // print(items.value[0].score);
-    // print(items.value[1].score);
 
     // Update scores online
     await databaseMethods.setScore(
