@@ -7,8 +7,8 @@ import '../widget/widget.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/cupertino.dart';
-import "package:unorm_dart/unorm_dart.dart" as unorm;
 import 'vote.dart';
+import 'package:diacritic/diacritic.dart';
 
 class Search extends StatefulWidget {
   @override
@@ -29,12 +29,10 @@ class _SearchState extends State<Search> {
         isLoading = true;
       });
       // Check formatting
-      var combining = RegExp(r"[\u0300-\u036F]/g");
-      String textFormatted =
-          unorm.nfkd(searchEditingController.text).replaceAll(combining, "");
+      String textFormatted = removeDiacritics(searchEditingController.text);
+
       await databaseMethods.searchByPollName(textFormatted).then((snapshot) {
         searchResultSnapshot = snapshot;
-        print("$searchResultSnapshot");
         setState(() {
           isLoading = false;
           haveUserSearched = true;
@@ -59,13 +57,13 @@ class _SearchState extends State<Search> {
         : Container();
   }
 
-  getChatRoomId(String a, String b) {
-    if (a.substring(0, 1).codeUnitAt(0) > b.substring(0, 1).codeUnitAt(0)) {
-      return "$b\_$a";
-    } else {
-      return "$a\_$b";
-    }
-  }
+  // getChatRoomId(String a, String b) {
+  //   if (a.substring(0, 1).codeUnitAt(0) > b.substring(0, 1).codeUnitAt(0)) {
+  //     return "$b\_$a";
+  //   } else {
+  //     return "$a\_$b";
+  //   }
+  // }
 
   @override
   void initState() {

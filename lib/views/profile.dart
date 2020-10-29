@@ -46,7 +46,7 @@ class _ProfileState extends State<Profile> {
     setState(() {
       isLoading = true;
     });
-    loadData();
+    if (!userIsAnonymous) loadData();
     super.initState();
   }
 
@@ -84,7 +84,7 @@ class _ProfileState extends State<Profile> {
                 setState(() {
                   isLoading = true;
                 });
-                loadData();
+                if (!userIsAnonymous) loadData();
               },
             )
           ],
@@ -179,7 +179,7 @@ class _ProfileState extends State<Profile> {
                 )
               : myPolls.length == 0
                   ? RefreshIndicator(
-                      onRefresh: loadData,
+                      onRefresh: userIsAnonymous ? null : loadData,
                       child: SingleChildScrollView(
                         physics: AlwaysScrollableScrollPhysics(),
                         child: Center(
@@ -194,7 +194,7 @@ class _ProfileState extends State<Profile> {
                       ),
                     )
                   : RefreshIndicator(
-                      onRefresh: loadData,
+                      onRefresh: userIsAnonymous ? null : loadData,
                       child: GridView.builder(
                         gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
                           crossAxisCount: 2,
