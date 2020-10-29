@@ -80,41 +80,6 @@ class _TrendingState extends State<Trending> {
     });
   }
 
-  Future<void> pollDialog(String name, String pollId) async {
-    return showDialog<void>(
-      context: context,
-      barrierDismissible: true,
-      builder: (BuildContext context) {
-        return AlertDialog(
-          title: Text(name),
-          content: Container(
-            height: 150,
-            child: Column(
-              children: [
-                Row(
-                  children: [
-                    RaisedButton(
-                      child: Text('Wpp'),
-                      onPressed: null,
-                    ),
-                  ],
-                ),
-              ],
-            ),
-          ),
-          actions: <Widget>[
-            TextButton(
-              child: Text('Cancel'),
-              onPressed: () {
-                Navigator.of(context).pop();
-              },
-            ),
-          ],
-        );
-      },
-    );
-  }
-
   @override
   void initState() {
     setState(() {
@@ -155,64 +120,11 @@ class _TrendingState extends State<Trending> {
                           padding: const EdgeInsets.all(20),
                           itemCount: categories[ind].polls.length,
                           itemBuilder: (context, index) {
-                            return Container(
-                              padding: const EdgeInsets.all(10),
-                              width: 150,
-                              child: Ink(
-                                decoration: BoxDecoration(
-                                  color: Colors.yellowAccent,
-                                  // image: DecorationImage(
-                                  //   image: AssetImage("assets/mindful.jpg"),
-                                  //   fit: BoxFit.cover,
-                                  // ),
-                                  borderRadius: BorderRadius.circular(12),
-                                ),
-                                child: InkWell(
-                                  splashColor: Colors.blue,
-                                  borderRadius: BorderRadius.circular(12),
-                                  child: Container(
-                                    height: 50,
-                                    // width: 100,
-                                    child: Container(
-                                      margin: EdgeInsets.fromLTRB(15, 15, 0, 0),
-                                      child: Column(
-                                        children: [
-                                          Text(
-                                            categories[ind].polls[index].name,
-                                            style: TextStyle(
-                                                color: Colors.black,
-                                                fontSize: 20,
-                                                fontWeight: FontWeight.w600),
-                                          ),
-                                          Text(
-                                            'by: ${categories[ind].polls[index].creator}',
-                                            style: TextStyle(
-                                                color: Colors.black,
-                                                fontSize: 20,
-                                                fontWeight: FontWeight.w600),
-                                          ),
-                                        ],
-                                      ),
-                                    ),
-                                  ),
-                                  onTap: () => {
-                                    Navigator.push(
-                                      context,
-                                      MaterialPageRoute(
-                                        builder: (context) => Vote(
-                                            pollId: categories[ind]
-                                                .polls[index]
-                                                .id),
-                                      ),
-                                    ),
-                                  },
-                                  onLongPress: () => {
-                                    pollDialog(
-                                        categories[ind].polls[index].name,
-                                        categories[ind].polls[index].id)
-                                  },
-                                ),
-                              ),
+                            return pollCard(
+                              name: categories[ind].polls[index].name,
+                              creator: categories[ind].polls[index].creator,
+                              pollId: categories[ind].polls[index].id,
+                              context: context,
                             );
                           },
                         ),
