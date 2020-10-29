@@ -35,7 +35,7 @@ class _SignInState extends State<SignIn> {
 
     switch (method) {
       case 0: // email and password
-        if (formKey.currentState.validate()) {
+        // if (formKey.currentState.validate()) {
           await authService
               .signInWithEmailAndPassword(
                   emailEditingController.text, passwordEditingController.text)
@@ -61,7 +61,7 @@ class _SignInState extends State<SignIn> {
               );
             }
           });
-        }
+        // }
         break;
 
       case 1: // facebook

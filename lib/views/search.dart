@@ -1,5 +1,7 @@
 // import '../helper/constants.dart';
 // import '../models/user.dart';
+import 'dart:js';
+import 'package:poll/models/poll.dart';
 import '../services/database.dart';
 import '../widget/widget.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
@@ -46,59 +48,13 @@ class _SearchState extends State<Search> {
             itemCount: searchResultSnapshot.docs.length,
             itemBuilder: (context, index) {
               return pollCard(
-                searchResultSnapshot.docs[index].get("name"),
-                searchResultSnapshot.docs[index].get("creator"),
-                searchResultSnapshot.docs[index].id,
+                name: searchResultSnapshot.docs[index].get("name"),
+                creator: searchResultSnapshot.docs[index].get("creator"),
+                pollId: searchResultSnapshot.docs[index].id,
+                context: context,
               );
             })
         : Container();
-  }
-
-  Widget pollCard(String name, String creator, String pollId) {
-    return CupertinoButton(
-      child: Container(
-        height: 100,
-        width: 300,
-        decoration: BoxDecoration(
-          color: Colors.yellowAccent,
-          // image: DecorationImage(
-          //   image: AssetImage("assets/mindful.jpg"),
-          //   fit: BoxFit.cover,
-          // ),
-          borderRadius: BorderRadius.circular(12),
-        ),
-        child: Container(
-            margin: EdgeInsets.fromLTRB(15, 15, 0, 0),
-            child: Column(
-              children: [
-                Text(
-                  name,
-                  style: TextStyle(
-                      color: Colors.black,
-                      fontSize: 20,
-                      fontWeight: FontWeight.w600),
-                ),
-                Text(
-                  'by: $creator',
-                  style: TextStyle(
-                      color: Colors.black,
-                      fontSize: 20,
-                      fontWeight: FontWeight.w600),
-                ),
-              ],
-            )),
-      ),
-      onPressed: () => {
-        Navigator.push(
-          context,
-          MaterialPageRoute(
-            builder: (context) => Vote(
-              pollId: pollId,
-            ),
-          ),
-        )
-      },
-    );
   }
 
   // getChatRoomId(String a, String b) {

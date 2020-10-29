@@ -207,55 +207,13 @@ class _ProfileState extends State<Profile> {
                         padding: const EdgeInsets.all(20),
                         itemCount: myPolls.length,
                         itemBuilder: (context, index) {
-                          return Ink(
-                            decoration: BoxDecoration(
-                              color: Colors.yellowAccent,
-                              // image: DecorationImage(
-                              //   image: AssetImage("assets/mindful.jpg"),
-                              //   fit: BoxFit.cover,
-                              // ),
-                              borderRadius: BorderRadius.circular(12),
-                            ),
-                            child: InkWell(
-                              splashColor: Colors.blue,
-                              borderRadius: BorderRadius.circular(12),
-                              child: Container(
-                                height: 200,
-                                width: 200,
-                                decoration: BoxDecoration(
-                                  color: Colors.yellowAccent,
-                                  // image: DecorationImage(
-                                  //   image: AssetImage("assets/mindful.jpg"),
-                                  //   fit: BoxFit.cover,
-                                  // ),
-                                  borderRadius: BorderRadius.circular(12),
-                                ),
-                                child: Container(
-                                  margin: EdgeInsets.fromLTRB(15, 15, 0, 0),
-                                  child: Text(
-                                    myPolls[index].name,
-                                    style: TextStyle(
-                                        color: Colors.black,
-                                        fontSize: 20,
-                                        fontWeight: FontWeight.w600),
-                                  ),
-                                ),
-                              ),
-                              onTap: () => {
-                                Navigator.push(
-                                  context,
-                                  MaterialPageRoute(
-                                    builder: (context) => Vote(
-                                        pollId: query.docs[index].get('id')),
-                                  ),
-                                ),
-                              },
-                              onLongPress: () => {
-                                pollDialog(
-                                    myPolls[index].name, myPolls[index].id)
-                              },
-                            ),
-                          );
+                          return pollCard(
+                              name: myPolls[index].name,
+                              creator: myPolls[index].creator,
+                              pollId: myPolls[index].id,
+                              context: context,
+                              isOwner: true,
+                            );
                         },
                       ),
                     ),
